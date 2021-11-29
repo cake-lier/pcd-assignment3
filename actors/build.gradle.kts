@@ -1,6 +1,8 @@
 plugins {
     scala
     application
+    id("cz.augi.gradle.wartremover") version "0.14.2"
+    id("cz.alenkacz.gradle.scalafmt") version "1.16.2"
 }
 
 repositories {
@@ -17,4 +19,31 @@ dependencies {
 
 application {
     //mainClass.set("it.unibo.pcd.assignment3.Main")
+}
+
+wartremover {
+    errorWarts.addAll(warningWarts)
+    errorWarts.addAll(setOf(
+        "ArrayEquals",
+        "AnyVal",
+        "Enumeration",
+        "Equals",
+        "ExplicitImplicitTypes",
+        "FinalCaseClass",
+        "FinalVal",
+        "ImplicitParameter",
+        "JavaConversions",
+        "JavaSerializable",
+        "LeakingSealed",
+        "MutableDataStructures",
+        "Nothing",
+        "PublicInference",
+        "Recursion",
+        "While"
+    ))
+    errorWarts.removeAll(setOf("DefaultArguments", "Null", "Var"))
+}
+
+scalafmt {
+    configFilePath = ".scalafmt.conf"
 }
