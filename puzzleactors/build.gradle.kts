@@ -36,11 +36,13 @@ wartremover {
         "LeakingSealed",
         "MutableDataStructures",
         "Nothing",
+        "Null",
         "PublicInference",
         "Recursion",
         "While"
     ))
-    errorWarts.removeAll(setOf("DefaultArguments", "Null", "Var"))
+    errorWarts.removeAll(setOf("DefaultArguments", "Var"))
+    warningWarts.clear()
 }
 
 scalafmt {
