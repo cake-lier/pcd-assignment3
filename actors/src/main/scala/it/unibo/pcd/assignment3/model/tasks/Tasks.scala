@@ -1,6 +1,6 @@
 package it.unibo.pcd.assignment3.model.tasks
 
-import it.unibo.pcd.assignment3.model.entities.{Command, FilePath, Page, Resource, StopwordsSet, Update}
+import it.unibo.pcd.assignment3.model.entities.{Availability, Command, FilePath, Page, Resource, StopwordsSet, Update}
 
 import java.nio.file.{Files, Path}
 import scala.util.Using

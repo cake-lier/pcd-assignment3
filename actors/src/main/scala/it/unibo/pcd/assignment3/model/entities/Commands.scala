@@ -1,5 +1,7 @@
 package it.unibo.pcd.assignment3.model.entities
 
+import akka.actor.typed.ActorRef
+
 import java.nio.file.Path
 
 sealed trait Command
@@ -86,4 +88,19 @@ object PoisonPill {
   def apply(forward: Boolean): PoisonPill = PoisonPillImpl(forward)
 
   def unapply(poisonPill: PoisonPill): Option[Boolean] = Some(poisonPill.forward)
+}
+
+sealed trait Availability extends Command{
+
+  val actor: ActorRef[Command]
+}
+
+object Availability{
+
+  private final case class AvailabilityImpl(actor: ActorRef[Command]) extends Availability
+
+  def apply(actor: ActorRef[Command]): Availability= AvailabilityImpl(actor)
+
+  def unapply(availability: Availability): Option[ActorRef[Command]] = Some(availability.actor)
+
 }
