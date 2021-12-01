@@ -1,5 +1,11 @@
 package it.unibo.pcd.assignment3.controller
 
+import akka.actor.typed.{ActorSystem, DispatcherSelector}
+import akka.actor.typed.scaladsl.Behaviors
+import it.unibo.pcd.assignment3.controller.actors.TaskExecutorActor
+import it.unibo.pcd.assignment3.model.entities.{Command, FilePath, Page, Update}
+import it.unibo.pcd.assignment3.model.tasks.{FilterTaskType, PageFilterTask, TaskContext}
+
 import java.nio.file.Path
 
 /** The Controller component of this application, it should represent the application itself. That being so, it receives user
@@ -29,6 +35,41 @@ trait Controller {
 }
 
 object Controller {
+  private val totalThreads: Int = (Runtime.getRuntime.availableProcessors * 1.0f * (1 + 1.093f)).round
 
-  def apply(): Controller = ???
+  private class ControllerImpl extends Controller {
+    private var actorSystem: Option[ActorSystem[Command]] = None
+
+    override def launch(filesDirectory: Path, stopwordsFile: Path, wordsNumber: Int): Unit =
+      actorSystem = Some(
+        ActorSystem(
+          Behaviors.setup[Command] { c =>
+            val pathCoordinator = c.spawn[Command](???, "path_coordinator")
+            val pageCoordinator = c.spawn[Command](???, "page_coordinator")
+            val updateCoordinator = c.spawn[Command](???, "update_coordinator")
+            LazyList
+              .continually(FilterTaskType.values.toSeq)
+              .flatten
+              .take(totalThreads - 2)
+              .map {
+                case FilterTaskType.Path => TaskExecutorActor[FilePath, Page](Seq.empty[TaskContext[FilePath, Page]])
+                case FilterTaskType.Page =>
+                  TaskExecutorActor(Seq(TaskContext(updateCoordinator, PageFilterTask(), DispatcherSelector.blocking())))
+                case FilterTaskType.Update => TaskExecutorActor[Page, Update](Seq.empty[TaskContext[Page, Update]])
+              }
+              .foreach(c.spawn[Command](_, ""))
+            Behaviors.empty
+          },
+          "actor_system"
+        )
+      )
+
+    override def suspend(): Unit = ???
+
+    override def resume(): Unit = ???
+
+    override def exit(): Unit = sys.exit()
+  }
+
+  def apply(): Controller = new ControllerImpl()
 }

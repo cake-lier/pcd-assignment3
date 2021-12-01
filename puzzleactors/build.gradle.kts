@@ -25,7 +25,6 @@ wartremover {
     errorWarts.addAll(setOf(
         "ArrayEquals",
         "AnyVal",
-        "Enumeration",
         "Equals",
         "ExplicitImplicitTypes",
         "FinalCaseClass",
@@ -38,7 +37,6 @@ wartremover {
         "Nothing",
         "Null",
         "PublicInference",
-        "Recursion",
         "While"
     ))
     errorWarts.removeAll(setOf("DefaultArguments", "Var"))
