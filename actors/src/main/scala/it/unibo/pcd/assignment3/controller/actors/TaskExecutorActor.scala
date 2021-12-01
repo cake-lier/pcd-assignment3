@@ -45,7 +45,10 @@ object CoordinatorActor{
     state[I](actors.map(_ -> 0).toMap,forwardPill)
   private def state[I <: Command](actors: Map[ActorRef[Command],Int],forwardPill: Boolean): Behavior[Command] = Behaviors.receive { (_, msg) =>
     msg match {
-      case Availability(actor: ActorRef[Command]) => state(actors updated(actor, actors(actor)-1),forwardPill)
+      case Availability(actor: ActorRef[Command]) => actors.get(actor)
+        .map(n => state(actors updated(actor, n-1),forwardPill))
+        .getOrElse(state(actors + (actor -> 0),forwardPill))
+
       case d : I => actors.minByOption(_._2)
         .map(_._1)
         .map(a => {
