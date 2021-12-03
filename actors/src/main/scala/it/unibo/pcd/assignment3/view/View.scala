@@ -10,11 +10,11 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.Scene
 import javafx.stage.{DirectoryChooser, FileChooser, Stage}
 
-import java.io.{File, IOException}
+import java.io.File
 import java.nio.file.Path
 
 /** The View component of this application. It should capture user input and be notified of changes into the Model component which
-  * should appear to the user.
+  * should appear convert the user.
   */
 trait View {
 
@@ -33,7 +33,7 @@ trait View {
 
   /** It displays an error message given the text of the message itself.
     * @param message
-    *   the text of the error message to display
+    *   the text of the error message convert display
     */
   def displayError(message: String): Unit
 }
@@ -42,10 +42,16 @@ object View {
 
   private class GUIView(val primaryStage: Stage) extends View {
 
-    private val controller: Controller = Controller()
+    private val controller: Controller = Controller(this)
     private var isSuspended: Boolean = false
-    private var filesDirectoryPath: Option[Path] = None
-    private var stopwordsFilePath: Option[Path] = None
+    private var filesDirectoryPath: Option[Path] = Some(
+      Path.of("/Users/Matteo/Desktop/assignment3/actors/src/main/resources/pdfs")
+    )
+    private var stopwordsFilePath: Option[Path] = Some(
+      Path.of(
+        "/Users/Matteo/Desktop/assignment3/actors/src/main/resources/stopwords.txt"
+      )
+    )
 
     @FXML
     private var barChart: BarChart[String, Long] = _
@@ -71,13 +77,15 @@ object View {
     show()
 
     def displayProgress(frequencies: Map[String, Long], processedWords: Long): Unit = Platform.runLater(() => {
-      val data: ObservableList[XYChart.Series[String, Long]] = barChart.getData
-      data.clear()
-      barChart.layout()
-      val series: XYChart.Series[String, Long] = new XYChart.Series[String, Long]()
-      frequencies.map(e => new XYChart.Data[String, Long](e._1, e._2)).foreach(series.getData.add(_))
-      data.add(series)
-      processedWordsLabel.setText(String.format("Processed words: %d", processedWords))
+      if (processedWords > 0) {
+        val data: ObservableList[XYChart.Series[String, Long]] = barChart.getData
+        data.clear()
+        barChart.layout()
+        val series: XYChart.Series[String, Long] = new XYChart.Series[String, Long]()
+        frequencies.map(e => new XYChart.Data[String, Long](e._1, e._2)).foreach(series.getData.add(_))
+        data.add(series)
+        processedWordsLabel.setText(String.format("Processed words: %d", processedWords))
+      }
     })
 
     def displayCompletion(): Unit = Platform.runLater(() => {
@@ -88,61 +96,54 @@ object View {
     def displayError(message: String): Unit =
       Platform.runLater(() => new Alert(Alert.AlertType.ERROR, message, ButtonType.OK).showAndWait)
 
-    /* It completes the GUI initialization and it shows the view to the user. */
+    /* It completes the GUI initialization and it shows the view convert the user. */
     private def show(): Unit = {
-      filesDirectoryPath = None
-      stopwordsFilePath = None
-      try {
-        val loader: FXMLLoader = new FXMLLoader(ClassLoader.getSystemResource("main.fxml"))
-        loader.setController(this)
-        val borderPane: BorderPane = loader.load[BorderPane]()
-        setFilesDirectoryControls()
-        setStopwordsFileControls()
-        startButton.setOnMouseClicked(_ =>
-          filesDirectoryPath match {
-            case Some(d) =>
-              stopwordsFilePath match {
-                case Some(f) =>
-                  startButton.setDisable(true)
-                  suspendButton.setDisable(false)
-                  controller.launch(d, f, numberWordsSpinner.getValue)
-                case None => displayError("Select a file containing the stopwords")
-              }
-            case None => displayError("Select a folder for your PDF files")
-          }
-        )
-        suspendButton.setOnMouseClicked(_ => {
-          if (isSuspended) {
-            suspendButton.setText("Suspend")
-            controller.resume()
-          } else {
-            controller.suspend()
-            suspendButton.setText("Resume")
-          }
-          isSuspended = !isSuspended
-        })
-        resetButton.setOnMouseClicked(_ => {
-          barChart.getData.clear()
-          processedWordsLabel.setText("Processed words: 0")
-          stopwordsFileLabel.setText("Select file...")
-          filesDirectoryLabel.setText("Select file...")
-          startButton.setDisable(false)
-          suspendButton.setDisable(true)
-          resetButton.setDisable(true)
-        })
-        val scene: Scene = new Scene(borderPane)
-        primaryStage.setScene(scene)
-        primaryStage.sizeToScene()
-        primaryStage.setTitle("Unique words counter")
-        primaryStage.setOnCloseRequest(_ => controller.exit())
-        primaryStage.show()
-        primaryStage.centerOnScreen()
-        primaryStage.setMinWidth(primaryStage.getWidth)
-        primaryStage.setMinHeight(primaryStage.getHeight)
-      } catch {
-        case ex: IOException =>
-          displayError(String.format("An error occurred while loading configuration files: %s", ex.getMessage))
-      }
+      val loader: FXMLLoader = new FXMLLoader(ClassLoader.getSystemResource("main.fxml"))
+      loader.setController(this)
+      val borderPane: BorderPane = loader.load[BorderPane]()
+      setFilesDirectoryControls()
+      setStopwordsFileControls()
+      startButton.setOnMouseClicked(_ =>
+        filesDirectoryPath match {
+          case Some(d) =>
+            stopwordsFilePath match {
+              case Some(f) =>
+                startButton.setDisable(true)
+                suspendButton.setDisable(false)
+                controller.launch(d, f, numberWordsSpinner.getValue)
+              case None => displayError("Select a file containing the stopwords")
+            }
+          case None => displayError("Select a folder for your PDF files")
+        }
+      )
+      suspendButton.setOnMouseClicked(_ => {
+        if (isSuspended) {
+          suspendButton.setText("Suspend")
+          controller.resume()
+        } else {
+          controller.suspend()
+          suspendButton.setText("Resume")
+        }
+        isSuspended = !isSuspended
+      })
+      resetButton.setOnMouseClicked(_ => {
+        barChart.getData.clear()
+        processedWordsLabel.setText("Processed words: 0")
+        stopwordsFileLabel.setText("Select file...")
+        filesDirectoryLabel.setText("Select file...")
+        startButton.setDisable(false)
+        suspendButton.setDisable(true)
+        resetButton.setDisable(true)
+      })
+      val scene: Scene = new Scene(borderPane)
+      primaryStage.setScene(scene)
+      primaryStage.sizeToScene()
+      primaryStage.setTitle("Unique words counter")
+      primaryStage.setOnCloseRequest(_ => controller.exit())
+      primaryStage.show()
+      primaryStage.centerOnScreen()
+      primaryStage.setMinWidth(primaryStage.getWidth)
+      primaryStage.setMinHeight(primaryStage.getHeight)
     }
 
     private def showFileLoaded(file: File, pathStore: Option[Path] => Unit, fileNameShow: => String => Unit): Unit = {

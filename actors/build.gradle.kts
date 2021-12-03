@@ -11,10 +11,13 @@ repositories {
 }
 
 val scalaVersion = "2.13"
+val scalaCompleteVersion = "$scalaVersion.7"
 
 dependencies {
-    implementation("org.scala-lang:scala-library:$scalaVersion.7")
+    implementation("org.scala-lang:scala-library:$scalaCompleteVersion")
     implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:2.6.17")
+    implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:2.6.17")
+    implementation("ch.qos.logback:logback-classic:1.2.5")
     implementation(fileTree("lib").include("**/*.jar"))
 }
 
@@ -31,15 +34,13 @@ wartremover {
         "ExplicitImplicitTypes",
         "FinalCaseClass",
         "FinalVal",
-        "ImplicitParameter",
         "JavaConversions",
         "JavaSerializable",
         "LeakingSealed",
         "MutableDataStructures",
         "Nothing",
         "Null",
-        "PublicInference",
-        "While"
+        "PublicInference"
     ))
     errorWarts.removeAll(setOf("DefaultArguments", "Var"))
     warningWarts.clear()

@@ -1,95 +1,70 @@
 package it.unibo.pcd.assignment3.model.tasks
 
-import it.unibo.pcd.assignment3.model.entities.{Availability, Command, FilePath, Page, Resource, StopwordsSet, Update}
+import it.unibo.pcd.assignment3.model.entities._
 
 import java.nio.file.{Files, Path}
-import scala.util.Using
 
-sealed trait Task[A <: Command, B] extends (A => B)
+sealed trait Task[A, B] extends (A => B)
 
-sealed trait SingletonTask[A <: Command, B <: Command] extends Task[A, B]
+sealed trait SingletonTask[A, B] extends Task[A, B]
 
-sealed trait IterableTask[A <: Command, B <: Command] extends Task[A, Iterable[B]]
+sealed trait IterableTask[A, B] extends Task[A, Iterable[B]]
 
-sealed trait StopwordsGeneratorTask extends SingletonTask[FilePath, StopwordsSet]
+case object StopwordsGeneratorTask extends SingletonTask[FilePath, StopwordsSet] {
 
-object StopwordsGeneratorTask {
+  import scala.jdk.CollectionConverters._
 
-  private final class StopwordsGeneratorTaskImpl extends StopwordsGeneratorTask {
-
-    import scala.jdk.CollectionConverters._
-
-    def apply(filePath: FilePath): StopwordsSet = StopwordsSet(Files.readAllLines(filePath.path).asScala.toSet)
-  }
-
-  def apply(): StopwordsGeneratorTask = new StopwordsGeneratorTaskImpl()
+  def apply(filePath: FilePath): StopwordsSet = StopwordsSet(Files.readAllLines(filePath.path).asScala.toSet)
 }
 
-sealed trait DocumentPathsGeneratorTask extends IterableTask[FilePath, FilePath]
+case object DocumentPathsGeneratorTask extends IterableTask[FilePath, FilePath] {
 
-object DocumentPathsGeneratorTask {
+  import scala.jdk.StreamConverters._
 
-  private final class DocumentPathsGeneratorTaskImpl extends DocumentPathsGeneratorTask {
-
-    import scala.jdk.StreamConverters._
-
-    def apply(filePath: FilePath): Iterable[FilePath] =
-      Files
-        .list(filePath.path)
-        .toScala(Seq.iterableFactory[Path])
-        .filter(p => ".*pdf$".r.matches(p.toString))
-        .map(FilePath(_))
-  }
-
-  def apply(): DocumentPathsGeneratorTask = new DocumentPathsGeneratorTaskImpl()
+  def apply(filePath: FilePath): Iterable[FilePath] =
+    Files
+      .list(filePath.path)
+      .toScala(Seq.iterableFactory[Path])
+      .filter(p => ".*pdf$".r.matches(p.toString))
+      .map(FilePath(_))
 }
 
-sealed trait PathFilterTask extends IterableTask[FilePath, Page]
+case object PathFilterTask extends SingletonTask[FilePath, Document] {
 
-object PathFilterTask {
+  import org.apache.pdfbox.pdmodel.PDDocument
 
-  private final class PathFilterTaskImpl extends PathFilterTask {
-
-    import org.apache.pdfbox.pdmodel.PDDocument
-    import org.apache.pdfbox.text.PDFTextStripper
-
-    override def apply(filePath: FilePath): Iterable[Page] = {
-      val stripper: PDFTextStripper = new PDFTextStripper()
-      Using(
-        PDDocument.load(filePath.path.toFile)
-      )(d =>
-        (1 to d.getNumberOfPages)
-          .map(i => {
-            stripper.setStartPage(i)
-            stripper.setEndPage(i)
-            stripper.getText(d)
-          })
-          .map(Page(_))
-      ).getOrElse(Seq.empty[Page])
-    }
-  }
-
-  def apply(): PathFilterTask = new PathFilterTaskImpl()
+  override def apply(filePath: FilePath): Document = Document(PDDocument.load(filePath.path.toFile))
 }
 
-sealed trait PageFilterTask extends SingletonTask[Resource, Update]
+case object DocumentFilterTask extends IterableTask[Document, Page] {
 
-object PageFilterTask {
+  import org.apache.pdfbox.text.PDFTextStripper
 
-  private final class PageFilterTaskImpl extends PageFilterTask {
-
-    def apply(resource: Resource): Update = {
-      val words = "\\W+".r.split(resource.page.text).toSeq
-      Update(
-        words
-          .map(_.toLowerCase)
-          .filter(!resource.stopwordsSet.stopwords.contains(_))
-          .groupBy(w => w)
-          .map(e => (e._1, e._2.length)),
-        words.length
-      )
-    }
+  override def apply(document: Document): Iterable[Page] = {
+    val stripper: PDFTextStripper = new PDFTextStripper()
+    val pages: Iterable[Page] = (1 to document.document.getNumberOfPages)
+      .map(i => {
+        stripper.setStartPage(i)
+        stripper.setEndPage(i)
+        stripper.getText(document.document)
+      })
+      .map(Page(_))
+    document.document.close()
+    pages
   }
+}
 
-  def apply(): PageFilterTask = new PageFilterTaskImpl()
+case object PageFilterTask extends SingletonTask[Resource, Update] {
+
+  def apply(resource: Resource): Update = {
+    val words = "\\W+".r.split(resource.page.text).toSeq
+    Update(
+      words
+        .map(_.toLowerCase)
+        .filter(!resource.stopwordsSet.stopwords.contains(_))
+        .groupBy(w => w)
+        .map(e => (e._1, e._2.length)),
+      words.length
+    )
+  }
 }

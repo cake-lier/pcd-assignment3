@@ -7,7 +7,7 @@ object FilterTaskType extends Enumeration {
 
   val Path: Value = Value
 
-  val Page: Value = Value
+  val Document: Value = Value
 
-  val Update: Value = Value
+  val Page: Value = Value
 }
