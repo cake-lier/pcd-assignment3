@@ -1,13 +1,9 @@
 package it.unibo.pcd.assignment3.controller
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.ActorSystem
 import it.unibo.pcd.assignment3.controller.actors._
-import it.unibo.pcd.assignment3.controller.actors.Command._
-import it.unibo.pcd.assignment3.model.entities._
-import it.unibo.pcd.assignment3.model.tasks._
+import it.unibo.pcd.assignment3.model.entities.FilePath
 import it.unibo.pcd.assignment3.view.View
-import it.unibo.pcd.assignment3.AnyOps.discard
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
@@ -39,11 +35,11 @@ trait Controller {
 }
 
 object Controller {
-  private val totalActors: Int = (Runtime.getRuntime.availableProcessors * 1.0f * (1 + 1.093f)).round
 
   private class ControllerImpl(view: View) extends Controller {
     private var actorSystem: Option[ActorSystem[Command]] = None
     private val suspendedFlag: SuspendedFlag = SuspendedFlag()
+    private val totalActors: Int = (Runtime.getRuntime.availableProcessors * 1.0f * (1 + 1.093f)).round
     private val executor: ExecutionContext =
       ExecutionContext.fromExecutor(new SuspendableForkJoinPool(totalActors, suspendedFlag))
 
@@ -52,73 +48,7 @@ object Controller {
       actorSystem.foreach(_.terminate())
       actorSystem = Some(
         ActorSystem(
-          Behaviors.setup[Command] { c =>
-            val updateCoordinator: ActorRef[Command] =
-              c.spawn[Command](CoordinatorActor[UpdateCommand](), name = "update_coordinator")
-            val pageCoordinator: ActorRef[Command] =
-              c.spawn[Command](CoordinatorActor.pageCoordinator(updateCoordinator), name = "page_coordinator")
-            val documentCoordinator: ActorRef[Command] =
-              c.spawn[Command](CoordinatorActor[DocumentCommand](pageCoordinator), name = "document_coordinator")
-            val pathCoordinator: ActorRef[Command] =
-              c.spawn[Command](CoordinatorActor[FilePathCommand](documentCoordinator), name = "path_coordinator")
-            val pageFilterFactory: () => Behavior[Command] =
-              () =>
-                FilterTaskActor[ResourceCommand, Resource, Update, UpdateCommand](
-                  pageCoordinator,
-                  updateCoordinator,
-                  PageFilterTask,
-                  executor
-                )
-            val documentFilterFactory: () => Behavior[Command] = () =>
-              FilterTaskActor[DocumentCommand, Document, Page, PageCommand](
-                documentCoordinator,
-                pageCoordinator,
-                DocumentFilterTask,
-                executor,
-                pageFilterFactory
-              )
-            val pathFilterFactory: () => Behavior[Command] = () =>
-              FilterTaskActor[FilePathCommand, FilePath, Document, DocumentCommand](
-                pathCoordinator,
-                documentCoordinator,
-                PathFilterTask,
-                executor,
-                documentFilterFactory
-              )
-            discard {
-              c.spawn[Command](UpdateSinkActor(wordsNumber, view, updateCoordinator), name = "update_sink_actor")
-            }
-            LazyList
-              .continually(FilterTaskType.values.toSeq)
-              .zipWithIndex
-              .flatMap(e => e._1.map((_, e._2.toString)))
-              .take(Math.max(totalActors - 6, 3))
-              .foreach {
-                case (FilterTaskType.Path, n)     => c.spawn[Command](pathFilterFactory(), name = s"path_filter_actor_$n")
-                case (FilterTaskType.Document, n) => c.spawn[Command](documentFilterFactory(), name = s"document_filter_actor_$n")
-                case (FilterTaskType.Page, n)     => c.spawn[Command](pageFilterFactory(), name = s"page_filter_actor_$n")
-              }
-            discard {
-              c.spawn[Command](
-                PathGeneratorActor(
-                  FilePath(filesDirectory),
-                  FilePath(stopwordsFile),
-                  e => view.displayError(e.getMessage),
-                  pathCoordinator,
-                  pageCoordinator,
-                  pathFilterFactory,
-                  executor
-                ),
-                name = "path_generator_actor"
-              )
-            }
-            Behaviors.receiveMessage {
-              case PoisonPill =>
-                actorSystem = None
-                Behaviors.stopped
-              case _ => Behaviors.unhandled
-            }
-          },
+          RootActor(FilePath(filesDirectory), FilePath(stopwordsFile), wordsNumber, view, executor, totalActors),
           "actor_system"
         )
       )

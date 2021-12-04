@@ -40,18 +40,12 @@ trait View {
 
 object View {
 
-  private class GUIView(val primaryStage: Stage) extends View {
+  private class GUIView(primaryStage: Stage) extends View {
 
     private val controller: Controller = Controller(this)
     private var isSuspended: Boolean = false
-    private var filesDirectoryPath: Option[Path] = Some(
-      Path.of("/Users/Matteo/Desktop/assignment3/actors/src/main/resources/pdfs")
-    )
-    private var stopwordsFilePath: Option[Path] = Some(
-      Path.of(
-        "/Users/Matteo/Desktop/assignment3/actors/src/main/resources/stopwords.txt"
-      )
-    )
+    private var filesDirectoryPath: Option[Path] = None
+    private var stopwordsFilePath: Option[Path] = None
 
     @FXML
     private var barChart: BarChart[String, Long] = _
@@ -77,15 +71,13 @@ object View {
     show()
 
     def displayProgress(frequencies: Map[String, Long], processedWords: Long): Unit = Platform.runLater(() => {
-      if (processedWords > 0) {
-        val data: ObservableList[XYChart.Series[String, Long]] = barChart.getData
-        data.clear()
-        barChart.layout()
-        val series: XYChart.Series[String, Long] = new XYChart.Series[String, Long]()
-        frequencies.map(e => new XYChart.Data[String, Long](e._1, e._2)).foreach(series.getData.add(_))
-        data.add(series)
-        processedWordsLabel.setText(String.format("Processed words: %d", processedWords))
-      }
+      val data: ObservableList[XYChart.Series[String, Long]] = barChart.getData
+      data.clear()
+      barChart.layout()
+      val series: XYChart.Series[String, Long] = new XYChart.Series[String, Long]()
+      frequencies.map(e => new XYChart.Data[String, Long](e._1, e._2)).foreach(series.getData.add(_))
+      data.add(series)
+      processedWordsLabel.setText(String.format("Processed words: %d", processedWords))
     })
 
     def displayCompletion(): Unit = Platform.runLater(() => {
@@ -127,6 +119,8 @@ object View {
         isSuspended = !isSuspended
       })
       resetButton.setOnMouseClicked(_ => {
+        filesDirectoryPath = None
+        stopwordsFilePath = None
         barChart.getData.clear()
         processedWordsLabel.setText("Processed words: 0")
         stopwordsFileLabel.setText("Select file...")

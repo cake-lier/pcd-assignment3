@@ -31,4 +31,6 @@ object Command {
   final case class Available(actor: ActorRef[Command]) extends Command
 
   case object TimerExpired extends Command
+
+  case object Ready extends Command
 }
