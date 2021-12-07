@@ -1,7 +1,7 @@
 package it.unibo.pcd.assignment3.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior, DispatcherSelector}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.scaladsl.Behaviors
 import it.unibo.pcd.assignment3.controller.actors.Command.{Available, PoisonPill, Ready}
 import it.unibo.pcd.assignment3.controller.actors.ConvertibleToCommand._
 import it.unibo.pcd.assignment3.model.tasks.{IterableTask, SingletonTask}

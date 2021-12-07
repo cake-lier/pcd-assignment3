@@ -31,7 +31,6 @@ object RootActor {
         c.spawn[Command](CoordinatorActor[FilePathCommand](c.self, documentCoordinator), name = "path_coordinator")
       awaitCoordinators(
         spawnCount = 4,
-        readyCount = 1,
         pathCoordinator,
         documentCoordinator,
         pageCoordinator,
@@ -47,7 +46,6 @@ object RootActor {
 
   private def awaitCoordinators(
     spawnCount: Int,
-    readyCount: Int,
     pathCoordinator: ActorRef[Command],
     documentCoordinator: ActorRef[Command],
     pageCoordinator: ActorRef[Command],
@@ -61,10 +59,9 @@ object RootActor {
   ): Behavior[Command] =
     Behaviors.receive { (c, m) =>
       m match {
-        case Ready if readyCount < spawnCount =>
+        case Ready if spawnCount > 1 =>
           awaitCoordinators(
-            spawnCount,
-            readyCount + 1,
+            spawnCount - 1,
             pathCoordinator,
             documentCoordinator,
             pageCoordinator,
@@ -116,7 +113,6 @@ object RootActor {
           }
           awaitWorkers(
             workersToSpawn.size,
-            readyCount = 1,
             pathCoordinator,
             pageCoordinator,
             pathFilterFactory,
@@ -132,7 +128,6 @@ object RootActor {
 
   private def awaitWorkers(
     spawnCount: Int,
-    readyCount: Int,
     pathCoordinator: ActorRef[Command],
     pageCoordinator: ActorRef[Command],
     pathFilterFactory: () => Behavior[Command],
@@ -144,10 +139,9 @@ object RootActor {
   ): Behavior[Command] =
     Behaviors.receive { (c, m) =>
       m match {
-        case Ready if readyCount < spawnCount =>
+        case Ready if spawnCount > 1 =>
           awaitWorkers(
-            spawnCount,
-            readyCount + 1,
+            spawnCount - 1,
             pathCoordinator,
             pageCoordinator,
             pathFilterFactory,
