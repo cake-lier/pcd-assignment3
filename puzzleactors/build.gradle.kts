@@ -14,6 +14,9 @@ val scalaVersion = "2.13"
 dependencies {
     implementation("org.scala-lang:scala-library:$scalaVersion.7")
     implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:2.6.17")
+    implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:2.6.17")
+    implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:2.6.17")
+    implementation("org.slf4j:slf4j-simple:1.6.1")
 }
 
 application {
