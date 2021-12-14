@@ -1,9 +1,8 @@
 package it.unibo.pcd.assignment3
 
-import akka.actor.typed.{ActorSystem, Behavior}
-import akka.actor.typed.scaladsl.Behaviors
-import com.typesafe.config.ConfigFactory
 import _root_.it.unibo.pcd.assignment3.Operations.discard
+import akka.actor.typed.ActorSystem
+import com.typesafe.config.ConfigFactory
 import it.unibo.pcd.assignment3.game.controller.{Controller, Message}
 
 object Main {

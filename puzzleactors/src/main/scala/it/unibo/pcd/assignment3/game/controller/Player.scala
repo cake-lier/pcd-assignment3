@@ -1,14 +1,12 @@
 package it.unibo.pcd.assignment3.game.controller
 
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
-import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.cluster.ClusterEvent.MemberEvent
 import akka.cluster.typed.{Cluster, Subscribe, Unsubscribe}
 import it.unibo.pcd.assignment3.Operations.AnyOps
-import it.unibo.pcd.assignment3.game
-import it.unibo.pcd.assignment3.game.model.Actor
-import it.unibo.pcd.assignment3.game.model.Board
+import it.unibo.pcd.assignment3.game.model.{Actor, Board}
 
 import java.time.Instant
 
