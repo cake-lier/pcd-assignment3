@@ -2,17 +2,13 @@ package it.unibo.pcd.assignment3.game.view
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.unibo.pcd.assignment3.Operations.discard
-import it.unibo.pcd.assignment3.game.controller.{Controller, GameEnded, Message, NewBoard, Stop}
-import it.unibo.pcd.assignment3.game.model.{Actor, Board}
-import it.unibo.pcd.assignment3.game.TileButton
-import it.unibo.pcd.assignment3.game.view.PuzzleBoard.PuzzleBoardImpl
+import it.unibo.pcd.assignment3.game.controller.{GameEnded, Message, NewBoard, Stop}
+import it.unibo.pcd.assignment3.game.model.Actor
 
-import java.awt.image.{CropImageFilter, FilteredImageSource}
-import java.awt.{BorderLayout, Color, GridLayout, Image}
+import java.awt.Image
 import javax.imageio.ImageIO
 import javax.swing._
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Success, Try}
 
 object View {
   def apply(rows: Int, columns: Int, controller: Actor): Behavior[Message] = {

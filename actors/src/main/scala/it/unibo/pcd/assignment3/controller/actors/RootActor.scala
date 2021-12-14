@@ -1,10 +1,10 @@
 package it.unibo.pcd.assignment3.controller.actors
 
-import akka.actor.typed.{ActorRef, Behavior, Terminated}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior, Terminated}
+import it.unibo.pcd.assignment3.AnyOps.discard
 import it.unibo.pcd.assignment3.controller.actors.Command._
 import it.unibo.pcd.assignment3.model.entities._
-import it.unibo.pcd.assignment3.AnyOps.discard
 import it.unibo.pcd.assignment3.model.tasks.{DocumentFilterTask, FilterTaskType, PageFilterTask, PathFilterTask}
 import it.unibo.pcd.assignment3.view.View
 
@@ -57,7 +57,7 @@ object RootActor {
     executor: ExecutionContext,
     totalActors: Int
   ): Behavior[Command] =
-    Behaviors.receive { (c, m) =>
+    Behaviors.receive[Command] { (c, m) =>
       m match {
         case Ready if spawnCount > 1 =>
           awaitCoordinators(

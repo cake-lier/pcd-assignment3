@@ -1,10 +1,10 @@
 package it.unibo.pcd.assignment3.game.controller
 
-import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.Behavior
+import akka.actor.typed.scaladsl.Behaviors
 import it.unibo.pcd.assignment3.Operations.AnyOps
 import it.unibo.pcd.assignment3.game.model.{Actor, Board, Card}
-import it.unibo.pcd.assignment3.game.view.{PuzzleBoard, View}
+import it.unibo.pcd.assignment3.game.view.View
 
 object Controller {
   def apply(rows: Int, columns: Int, create: Boolean = false): Behavior[Message] = Behaviors.setup { ctx =>
