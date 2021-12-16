@@ -26,6 +26,10 @@ public class PuzzleBoardImpl implements PuzzleBoard {
                               .collect(Collectors.toCollection(ArrayList::new));
     }
 
+    public PuzzleBoardImpl(final List<Tile> tiles) {
+        this.tiles = new ArrayList<>(tiles);
+    }
+
     @Override
     public List<Tile> getTiles() {
         return Collections.unmodifiableList(this.tiles);

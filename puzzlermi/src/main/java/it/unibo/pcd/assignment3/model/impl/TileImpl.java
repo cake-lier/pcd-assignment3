@@ -3,7 +3,9 @@ package it.unibo.pcd.assignment3.model.impl;
 import it.unibo.pcd.assignment3.model.Position;
 import it.unibo.pcd.assignment3.model.Tile;
 
-public record TileImpl(Position originalPosition, Position currentPosition) implements Tile {
+import java.io.Serializable;
+
+public record TileImpl(Position originalPosition, Position currentPosition) implements Tile, Serializable {
 
     @Override
     public Position getOriginalPosition() {

@@ -4,7 +4,6 @@ import it.unibo.pcd.assignment3.controller.Controller;
 import it.unibo.pcd.assignment3.view.View;
 
 import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.util.Objects;
@@ -34,19 +33,16 @@ public class FirstPeerControllerBuilder {
         return this;
     }
 
-    public Controller build()
-        throws RemoteException, AlreadyBoundException, NotBoundException {
-        final var registry = LocateRegistry.createRegistry(this.localPort);
-        final var self = new PeerImpl(this.localHost, this.localPort);
-        final var addressBook = new AddressBookImpl(self);
-        registry.bind("AddressBook", addressBook);
-        final var sharedPuzzleBoard = new RemoteLockImpl();
-        registry.bind("RemotePuzzle", sharedPuzzleBoard);
-        // What to do with the puzzle?
+    public Controller build() throws RemoteException, AlreadyBoundException {
         if (this.built) {
             throw new IllegalArgumentException("This builder has already built its object");
         }
         this.built = true;
-        return new ControllerImpl(this.rows, this.columns, this.view, addressBook);
+        return new ControllerImpl(
+            this.rows,
+            this.columns,
+            this.view,
+            new PeerImpl(this.localHost, this.localPort)
+        );
     }
 }

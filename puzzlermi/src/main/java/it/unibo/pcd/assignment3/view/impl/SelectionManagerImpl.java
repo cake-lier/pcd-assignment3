@@ -16,12 +16,11 @@ public class SelectionManagerImpl implements SelectionManager {
     }
 
 	@Override
-    public void selectTile(final Tile tile, final Runnable onSwapPerformed) {
+    public void selectTile(final Tile tile) {
 		if (this.selectedTile.isPresent()) {
             if (!this.selectedTile.get().equals(tile)) {
                 this.controller.swap(this.selectedTile.get(), tile);
             }
-            onSwapPerformed.run();
             this.selectedTile = Optional.empty();
 		} else {
 			this.selectedTile = Optional.of(tile);

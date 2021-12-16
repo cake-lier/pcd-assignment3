@@ -11,22 +11,14 @@ import java.util.Objects;
 public class ExtraPeerControllerBuilder {
     private final String localHost;
     private final String remoteHost;
-    private final int rows;
-    private final int columns;
     private final View view;
     private int remotePort;
     private int localPort;
     private boolean built;
 
-    public ExtraPeerControllerBuilder(final String localHost,
-                                      final String remoteHost,
-                                      final int rows,
-                                      final int columns,
-                                      final View view) {
+    public ExtraPeerControllerBuilder(final String localHost, final String remoteHost, final View view) {
         this.localHost = Objects.requireNonNull(localHost);
         this.remoteHost = Objects.requireNonNull(remoteHost);
-        this.rows = rows;
-        this.columns = columns;
         this.view = Objects.requireNonNull(view);
         this.remotePort = 1099;
         this.localPort = 1099;
@@ -44,16 +36,14 @@ public class ExtraPeerControllerBuilder {
     }
 
     public Controller build() throws RemoteException, AlreadyBoundException, NotBoundException {
-        // What to do with the puzzle?
         if (this.built) {
             throw new IllegalArgumentException("This builder has already built its object");
         }
         this.built = true;
         return new ControllerImpl(
-            this.rows,
-            this.columns,
             this.view,
-            new RemoteSystemImpl(this.localHost, this.localPort, this.remoteHost, this.remotePort)
+            new PeerImpl(this.localHost, this.localPort),
+            new PeerImpl(this.remoteHost, this.remotePort)
         );
     }
 }

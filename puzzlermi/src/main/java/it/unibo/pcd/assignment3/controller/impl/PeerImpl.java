@@ -2,7 +2,9 @@ package it.unibo.pcd.assignment3.controller.impl;
 
 import it.unibo.pcd.assignment3.controller.Peer;
 
-public record PeerImpl(String host, int port) implements Peer {
+import java.io.Serializable;
+
+public record PeerImpl(String host, int port) implements Peer, Serializable {
 
     @Override
     public String getHost() {

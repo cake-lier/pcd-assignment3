@@ -6,6 +6,7 @@ import it.unibo.pcd.assignment3.model.Tile;
 import it.unibo.pcd.assignment3.model.impl.PositionImpl;
 import it.unibo.pcd.assignment3.view.SelectionManager;
 import it.unibo.pcd.assignment3.view.View;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
@@ -19,10 +20,10 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.function.FailableFunction;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,15 +31,16 @@ public class ViewImpl implements View {
     private final Controller controller;
 	private final SelectionManager selectionManager;
     private final Map<Position, Image> tiles;
+    private final GridPane grid;
 
     public ViewImpl(final Stage primaryStage,
+                    final int rows,
+                    final int columns,
                     final String imageUrl,
-                    final Function<View, Controller> controllerFactory) {
-        this.controller = controllerFactory.apply(this);
-        this.selectionManager = new SelectionManagerImpl(this.controller);
+                    final FailableFunction<View, Controller, Exception> controllerFactory)
+        throws Exception {
         primaryStage.setTitle("Puzzle");
     	primaryStage.setResizable(false);
-        primaryStage.setOnCloseRequest(e -> this.controller.exit());
         final var board = new BorderPane();
         board.setBorder(new Border(new BorderStroke(
             Color.GRAY,
@@ -46,8 +48,8 @@ public class ViewImpl implements View {
             CornerRadii.EMPTY,
             BorderWidths.DEFAULT
         )));
-        final var grid = new GridPane();
-        board.setCenter(grid);
+        this.grid = new GridPane();
+        board.setCenter(this.grid);
         final var image = new Image(imageUrl);
         final var tileWidth = (int) image.getWidth() / columns;
         final var tileHeight = (int) image.getHeight() / rows;
@@ -63,39 +65,33 @@ public class ViewImpl implements View {
                                         return Map.<PositionImpl, Image>entry(new PositionImpl(i, j), newImage);
                                     }))
                                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        paintPuzzle(grid);
+        this.controller = controllerFactory.apply(this);
+        this.selectionManager = new SelectionManagerImpl(this.controller);
+        primaryStage.setOnCloseRequest(e -> this.controller.exit());
+        this.displayTilesImmediately(this.controller.getTiles());
         primaryStage.setScene(new Scene(board));
         primaryStage.show();
-    }
-    
-    private void paintPuzzle(final GridPane grid) {
-    	grid.getChildren().removeAll(grid.getChildren());
-    	this.controller.getTiles().forEach(t -> {
-    		final var button = new TileButton(
-                this.tiles.get(t.getOriginalPosition()),
-                () -> this.selectionManager.selectTile(t, () -> {
-            		paintPuzzle(grid);
-                	checkSolution();
-            	})
-            );
-            grid.add(button, t.getCurrentPosition().getX(), t.getCurrentPosition().getY());
-    	});
-        grid.layout();
-    }
-
-    private void checkSolution() {
-    	if (this.controller.isSolution()) {
-    		new Alert(Alert.AlertType.INFORMATION, "Puzzle Completed!").showAndWait();
-    	}
     }
 
     @Override
     public void displayTiles(final List<Tile> tiles) {
-
+        Platform.runLater(() -> this.displayTilesImmediately(tiles));
     }
 
     @Override
     public void displaySolution() {
+        Platform.runLater(() -> new Alert(Alert.AlertType.INFORMATION, "Puzzle Completed!").showAndWait());
+    }
 
+    private void displayTilesImmediately(final List<Tile> tiles) {
+        this.grid.getChildren().removeAll(this.grid.getChildren());
+        tiles.forEach(t -> {
+            final var button = new TileButton(
+                this.tiles.get(t.getOriginalPosition()),
+                () -> this.selectionManager.selectTile(t)
+            );
+            this.grid.add(button, t.getCurrentPosition().getX(), t.getCurrentPosition().getY());
+        });
+        this.grid.layout();
     }
 }

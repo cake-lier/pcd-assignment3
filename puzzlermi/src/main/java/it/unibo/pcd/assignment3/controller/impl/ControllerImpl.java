@@ -1,40 +1,45 @@
 package it.unibo.pcd.assignment3.controller.impl;
 
-import it.unibo.pcd.assignment3.controller.AddressBook;
 import it.unibo.pcd.assignment3.controller.Controller;
-import it.unibo.pcd.assignment3.controller.RemoteLock;
+import it.unibo.pcd.assignment3.controller.Peer;
+import it.unibo.pcd.assignment3.controller.RemoteSystem;
 import it.unibo.pcd.assignment3.model.PuzzleBoard;
 import it.unibo.pcd.assignment3.model.Tile;
 import it.unibo.pcd.assignment3.model.impl.PuzzleBoardImpl;
 import it.unibo.pcd.assignment3.view.View;
 
-import java.rmi.registry.LocateRegistry;
+import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.util.List;
 import java.util.Objects;
 
 class ControllerImpl implements Controller {
-    private final PuzzleBoard board;
-    private final View view;
-    private final AddressBook addressBook;
+    private final RemoteSystem remoteSystem;
 
-    ControllerImpl(final int rows, final int columns, final View view, final AddressBook addressBook) {
-        this.board = new PuzzleBoardImpl(rows, columns);
-        this.view = Objects.requireNonNull(view);
-        this.addressBook = Objects.requireNonNull(addressBook);
+    ControllerImpl(final int rows, final int columns, final View view, final Peer self)
+        throws AlreadyBoundException, RemoteException {
+        this.remoteSystem = new RemoteSystemImpl(self, view, new PuzzleBoardImpl(rows, columns));
+    }
+
+    ControllerImpl(final View view, final Peer self, final Peer buddy)
+        throws AlreadyBoundException, RemoteException, NotBoundException {
+        this.remoteSystem = new RemoteSystemImpl(self, buddy, view);
     }
 
     @Override
     public void exit() {
+        // Deregister from system
         System.exit(0);
     }
 
     @Override
+    public List<Tile> getTiles() {
+        return this.remoteSystem.getTiles();
+    }
+
+    @Override
     public void swap(final Tile firstTile, final Tile secondTile) {
-        this.addressBook.getPeers().forEach(p -> {
-            final var registry = LocateRegistry.getRegistry(p.getHost(), p.getPort());
-            final var sharedSemaphore = ((RemoteLock) registry.lookup("SharedPuzzleBoard"));
-            sharedSemaphore.acquireLock(self);
-        });
-        this.board.swap(firstTile, secondTile);
-        this.view.displayTiles(this.board.getTiles());
+        this.remoteSystem.requestSwap(firstTile, secondTile);
     }
 }
