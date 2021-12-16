@@ -6,7 +6,7 @@ public interface PuzzleBoard {
 
     List<Tile> getTiles();
 
-    void swap(Tile firstTile, Tile secondTile);
+    void swap(Position firstPosition, Position secondPosition);
 
     boolean isSolution();
 }

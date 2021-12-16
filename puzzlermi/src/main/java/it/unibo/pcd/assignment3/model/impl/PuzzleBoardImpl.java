@@ -1,5 +1,6 @@
 package it.unibo.pcd.assignment3.model.impl;
 
+import it.unibo.pcd.assignment3.model.Position;
 import it.unibo.pcd.assignment3.model.PuzzleBoard;
 import it.unibo.pcd.assignment3.model.Tile;
 
@@ -32,15 +33,25 @@ public class PuzzleBoardImpl implements PuzzleBoard {
 
     @Override
     public List<Tile> getTiles() {
-        return Collections.unmodifiableList(this.tiles);
+        return List.copyOf(this.tiles);
     }
 
     @Override
-    public void swap(final Tile firstTile, final Tile secondTile) {
-        this.tiles.remove(firstTile);
-        this.tiles.remove(secondTile);
-        this.tiles.add(new TileImpl(firstTile.getOriginalPosition(), secondTile.getCurrentPosition()));
-        this.tiles.add(new TileImpl(secondTile.getOriginalPosition(), firstTile.getCurrentPosition()));
+    public void swap(final Position firstPosition, final Position secondPosition) {
+        this.tiles
+            .stream()
+            .filter(t -> t.getCurrentPosition().equals(firstPosition))
+            .findFirst()
+            .ifPresent(t1 -> this.tiles
+                                 .stream()
+                                 .filter(t -> t.getCurrentPosition().equals(secondPosition))
+                                 .findFirst()
+                                 .ifPresent(t2 -> {
+                                    this.tiles.remove(t1);
+                                    this.tiles.remove(t2);
+                                    this.tiles.add(new TileImpl(t1.getOriginalPosition(), secondPosition));
+                                    this.tiles.add(new TileImpl(t2.getOriginalPosition(), firstPosition));
+                                 }));
 	}
 
     @Override

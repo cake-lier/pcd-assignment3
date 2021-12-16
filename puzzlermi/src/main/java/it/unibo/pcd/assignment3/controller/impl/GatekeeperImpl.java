@@ -8,6 +8,7 @@ import it.unibo.pcd.assignment3.controller.RemoteSemaphore;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collection;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -79,5 +80,10 @@ public class GatekeeperImpl implements LocalGatekeeper, RemoteGatekeeper {
         this.remotePuzzles.remove(peer);
         this.localSemaphores.remove(peer);
         this.remoteSemaphores.remove(peer);
+    }
+
+    @Override
+    public void unregisterPeers(final Collection<? extends Peer> peers) throws RemoteException {
+        peers.forEach(this::unregisterPeer);
     }
 }

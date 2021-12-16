@@ -20,6 +20,6 @@ public record PeerImpl(String host, int port) implements Peer, Serializable {
     public int compareTo(final Peer other) {
         return this.host.compareTo(other.getHost()) != 0
                ? this.host.compareTo(other.getHost())
-               : (this.port != other.getPort() ? this.port - other.getPort() : 0);
+               : (this.port - other.getPort());
     }
 }

@@ -1,8 +1,10 @@
 package it.unibo.pcd.assignment3.view;
 
-import it.unibo.pcd.assignment3.model.Tile;
+import it.unibo.pcd.assignment3.model.Position;
 
 public interface SelectionManager {
 
-    void selectTile(Tile tile);
+    void selectPosition(Position position);
+
+    void clearSelection();
 }

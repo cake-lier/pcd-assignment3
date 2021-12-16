@@ -1,29 +1,32 @@
 package it.unibo.pcd.assignment3.view.impl;
 
 import it.unibo.pcd.assignment3.controller.Controller;
-import it.unibo.pcd.assignment3.model.Tile;
+import it.unibo.pcd.assignment3.model.Position;
 import it.unibo.pcd.assignment3.view.SelectionManager;
 
 import java.util.Optional;
 
 public class SelectionManagerImpl implements SelectionManager {
     private final Controller controller;
-	private Optional<Tile> selectedTile;
+	private Optional<Position> selectedPosition;
 
     public SelectionManagerImpl(final Controller controller) {
         this.controller = controller;
-        this.selectedTile = Optional.empty();
+        this.selectedPosition = Optional.empty();
     }
 
 	@Override
-    public void selectTile(final Tile tile) {
-		if (this.selectedTile.isPresent()) {
-            if (!this.selectedTile.get().equals(tile)) {
-                this.controller.swap(this.selectedTile.get(), tile);
-            }
-            this.selectedTile = Optional.empty();
+    public void selectPosition(final Position position) {
+		if (this.selectedPosition.isPresent() && !this.selectedPosition.get().equals(position)) {
+            this.controller.swap(this.selectedPosition.get(), position);
+            this.clearSelection();
 		} else {
-			this.selectedTile = Optional.of(tile);
+			this.selectedPosition = Optional.of(position);
 		}
 	}
+
+    @Override
+    public void clearSelection() {
+        this.selectedPosition = Optional.empty();
+    }
 }

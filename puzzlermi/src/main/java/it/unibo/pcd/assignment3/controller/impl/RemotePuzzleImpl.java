@@ -1,25 +1,30 @@
 package it.unibo.pcd.assignment3.controller.impl;
 
 import it.unibo.pcd.assignment3.controller.RemotePuzzle;
+import it.unibo.pcd.assignment3.model.Position;
 import it.unibo.pcd.assignment3.model.PuzzleBoard;
 import it.unibo.pcd.assignment3.model.Tile;
+import it.unibo.pcd.assignment3.view.View;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
 
 public class RemotePuzzleImpl implements RemotePuzzle {
     private final PuzzleBoard board;
-    private final BiConsumer<Tile, Tile> listener;
+    private final View view;
 
-    public RemotePuzzleImpl(final PuzzleBoard board, final BiConsumer<Tile, Tile> listener) {
+    public RemotePuzzleImpl(final PuzzleBoard board, final View view) {
         this.board = Objects.requireNonNull(board);
-        this.listener = Objects.requireNonNull(listener);
+        this.view = Objects.requireNonNull(view);
     }
 
     @Override
-    public void swap(final Tile firstTile, final Tile secondTile) {
-        this.listener.accept(firstTile, secondTile);
+    public void swap(final Position firstPosition, final Position secondPosition) {
+        this.board.swap(firstPosition, secondPosition);
+        this.view.displayTiles(this.board.getTiles());
+        if (this.board.isSolution()) {
+            this.view.displaySolution();
+        }
     }
 
     @Override

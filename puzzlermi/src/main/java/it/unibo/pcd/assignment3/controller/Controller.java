@@ -1,5 +1,6 @@
 package it.unibo.pcd.assignment3.controller;
 
+import it.unibo.pcd.assignment3.model.Position;
 import it.unibo.pcd.assignment3.model.Tile;
 
 import java.util.List;
@@ -10,5 +11,5 @@ public interface Controller {
 
     List<Tile> getTiles();
 
-    void swap(Tile firstTile, Tile secondTile);
+    void swap(Position firstPosition, Position secondPosition);
 }

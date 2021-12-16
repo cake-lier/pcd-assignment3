@@ -84,11 +84,12 @@ public class ViewImpl implements View {
     }
 
     private void displayTilesImmediately(final List<Tile> tiles) {
+        this.selectionManager.clearSelection();
         this.grid.getChildren().removeAll(this.grid.getChildren());
         tiles.forEach(t -> {
             final var button = new TileButton(
                 this.tiles.get(t.getOriginalPosition()),
-                () -> this.selectionManager.selectTile(t)
+                () -> this.selectionManager.selectPosition(t.getCurrentPosition())
             );
             this.grid.add(button, t.getCurrentPosition().getX(), t.getCurrentPosition().getY());
         });
