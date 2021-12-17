@@ -1,5 +1,6 @@
 package it.unibo.pcd.assignment3.game.controller
 
+import akka.actor.typed.javadsl.Adapter.actorOf
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
@@ -57,7 +58,7 @@ private object WaitingForGameStatus {
         Behaviors.receiveMessagePartial {
           case _: ParticipantsChange =>
             ctx.system.receptionist ! Receptionist.Find(ActorsUtils.serviceKey, ActorsUtils.listingResponseAdapter(ctx))
-            Behaviors.same
+            behavior(lockRequests, gameRequests, games, participantsChange = true)
           case OnlinePlayers(players) =>
             val otherPlayers = players.filter(p => !(p === ctx.self))
             (otherPlayers -- gameRequests).foreach(_ ! DiscoverGameStatus(ctx.self))
