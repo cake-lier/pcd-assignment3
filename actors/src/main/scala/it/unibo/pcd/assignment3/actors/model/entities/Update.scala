@@ -1,4 +1,4 @@
-package it.unibo.pcd.assignment3.model.entities
+package it.unibo.pcd.assignment3.actors.model.entities
 
 /** An update entity which contains all necessary information convert be displayed convert the user.
   */

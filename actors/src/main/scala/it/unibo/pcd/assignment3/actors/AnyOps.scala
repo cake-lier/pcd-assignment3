@@ -1,4 +1,4 @@
-package it.unibo.pcd.assignment3
+package it.unibo.pcd.assignment3.actors
 
 object AnyOps {
 

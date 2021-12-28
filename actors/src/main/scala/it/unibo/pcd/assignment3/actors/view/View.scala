@@ -1,6 +1,6 @@
-package it.unibo.pcd.assignment3.view
+package it.unibo.pcd.assignment3.actors.view
 
-import it.unibo.pcd.assignment3.controller.Controller
+import it.unibo.pcd.assignment3.actors.controller.Controller
 import javafx.application.Platform
 import javafx.collections.ObservableList
 import javafx.fxml.{FXML, FXMLLoader}

@@ -1,12 +1,12 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior, Terminated}
-import it.unibo.pcd.assignment3.AnyOps.discard
-import it.unibo.pcd.assignment3.controller.actors.Command._
-import it.unibo.pcd.assignment3.model.entities._
-import it.unibo.pcd.assignment3.model.tasks.{DocumentFilterTask, FilterTaskType, PageFilterTask, PathFilterTask}
-import it.unibo.pcd.assignment3.view.View
+import it.unibo.pcd.assignment3.actors.AnyOps.discard
+import it.unibo.pcd.assignment3.actors.controller.actors.Command._
+import it.unibo.pcd.assignment3.actors.model.entities._
+import it.unibo.pcd.assignment3.actors.model.tasks.{DocumentFilterTask, FilterTaskType, PageFilterTask, PathFilterTask}
+import it.unibo.pcd.assignment3.actors.view.View
 
 import scala.concurrent.ExecutionContext
 

@@ -1,10 +1,10 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
-import it.unibo.pcd.assignment3.controller.actors.Command.{PoisonPill, Ready, TimerExpired, UpdateCommand}
-import it.unibo.pcd.assignment3.model.entities.Update
-import it.unibo.pcd.assignment3.view.View
+import it.unibo.pcd.assignment3.actors.controller.actors.Command.{PoisonPill, Ready, TimerExpired, UpdateCommand}
+import it.unibo.pcd.assignment3.actors.model.entities.Update
+import it.unibo.pcd.assignment3.actors.view.View
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}

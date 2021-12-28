@@ -1,7 +1,7 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
-import it.unibo.pcd.assignment3.controller.actors.Command._
-import it.unibo.pcd.assignment3.model.entities._
+import it.unibo.pcd.assignment3.actors.controller.actors.Command._
+import it.unibo.pcd.assignment3.actors.model.entities._
 
 trait ConvertibleToCommand[A, B <: Command] {
 

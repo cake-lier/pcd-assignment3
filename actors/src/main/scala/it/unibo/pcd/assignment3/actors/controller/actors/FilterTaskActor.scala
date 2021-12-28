@@ -1,10 +1,10 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior, DispatcherSelector}
 import akka.actor.typed.scaladsl.Behaviors
-import it.unibo.pcd.assignment3.controller.actors.Command.{Available, PoisonPill, Ready}
-import it.unibo.pcd.assignment3.controller.actors.ConvertibleToCommand._
-import it.unibo.pcd.assignment3.model.tasks.{IterableTask, SingletonTask}
+import it.unibo.pcd.assignment3.actors.controller.actors.Command.{Available, PoisonPill, Ready}
+import it.unibo.pcd.assignment3.actors.controller.actors.ConvertibleToCommand._
+import it.unibo.pcd.assignment3.actors.model.tasks.{IterableTask, SingletonTask}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag

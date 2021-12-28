@@ -1,11 +1,11 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
-import it.unibo.pcd.assignment3.controller.actors.Command._
-import it.unibo.pcd.assignment3.controller.actors.ConvertibleToCommand.{RichCommandConverted, RichConvertibleToCommand}
-import it.unibo.pcd.assignment3.model.entities.{Page, Resource, StopwordsSet}
-import it.unibo.pcd.assignment3.AnyOps.AnyOps
+import it.unibo.pcd.assignment3.actors.controller.actors.Command._
+import it.unibo.pcd.assignment3.actors.controller.actors.ConvertibleToCommand.{RichCommandConverted, RichConvertibleToCommand}
+import it.unibo.pcd.assignment3.actors.model.entities.{Page, Resource, StopwordsSet}
+import it.unibo.pcd.assignment3.actors.AnyOps.AnyOps
 
 import scala.reflect.ClassTag
 

@@ -1,9 +1,9 @@
-package it.unibo.pcd.assignment3.controller
+package it.unibo.pcd.assignment3.actors.controller
 
 import akka.actor.typed.ActorSystem
-import it.unibo.pcd.assignment3.controller.actors._
-import it.unibo.pcd.assignment3.model.entities.FilePath
-import it.unibo.pcd.assignment3.view.View
+import it.unibo.pcd.assignment3.actors.controller.actors._
+import it.unibo.pcd.assignment3.actors.model.entities.FilePath
+import it.unibo.pcd.assignment3.actors.view.View
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext

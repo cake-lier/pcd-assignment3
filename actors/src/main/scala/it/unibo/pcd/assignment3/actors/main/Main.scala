@@ -1,9 +1,8 @@
-package it.unibo.pcd.assignment3.main
+package it.unibo.pcd.assignment3.actors.main
 
-import it.unibo.pcd.assignment3.view.View
-import it.unibo.pcd.assignment3.AnyOps.discard
+import it.unibo.pcd.assignment3.actors.view.View
+import it.unibo.pcd.assignment3.actors.AnyOps.discard
 import javafx.application.Application
-import javafx.application.Application.launch
 import javafx.stage.Stage
 
 /** The main class for the application with a graphical user interface for the user. */

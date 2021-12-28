@@ -1,6 +1,6 @@
-package it.unibo.pcd.assignment3.model.tasks
+package it.unibo.pcd.assignment3.actors.model.tasks
 
-import it.unibo.pcd.assignment3.model.entities._
+import it.unibo.pcd.assignment3.actors.model.entities._
 
 import java.nio.file.{Files, Path}
 

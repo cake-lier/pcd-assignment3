@@ -1,8 +1,8 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.receptionist.Receptionist
-import it.unibo.pcd.assignment3.model.entities._
+import it.unibo.pcd.assignment3.actors.model.entities._
 import org.apache.pdfbox.pdmodel.PDDocument
 
 import java.nio.file.Path

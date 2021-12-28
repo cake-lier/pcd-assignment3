@@ -1,4 +1,4 @@
-package it.unibo.pcd.assignment3.controller
+package it.unibo.pcd.assignment3.actors.controller
 
 trait SuspendedFlag {
 

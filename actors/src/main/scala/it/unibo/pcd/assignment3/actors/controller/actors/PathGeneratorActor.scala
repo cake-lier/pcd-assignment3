@@ -1,11 +1,11 @@
-package it.unibo.pcd.assignment3.controller.actors
+package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior, DispatcherSelector}
 import akka.actor.typed.scaladsl.Behaviors
-import it.unibo.pcd.assignment3.controller.actors.Command._
-import it.unibo.pcd.assignment3.controller.actors.ConvertibleToCommand.RichConvertibleToCommand
-import it.unibo.pcd.assignment3.model.entities.FilePath
-import it.unibo.pcd.assignment3.model.tasks.{DocumentPathsGeneratorTask, StopwordsGeneratorTask}
+import it.unibo.pcd.assignment3.actors.controller.actors.Command._
+import it.unibo.pcd.assignment3.actors.controller.actors.ConvertibleToCommand.RichConvertibleToCommand
+import it.unibo.pcd.assignment3.actors.model.entities.FilePath
+import it.unibo.pcd.assignment3.actors.model.tasks.{DocumentPathsGeneratorTask, StopwordsGeneratorTask}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}

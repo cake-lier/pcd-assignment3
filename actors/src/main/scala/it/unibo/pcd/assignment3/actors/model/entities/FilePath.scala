@@ -1,4 +1,4 @@
-package it.unibo.pcd.assignment3.model.entities
+package it.unibo.pcd.assignment3.actors.model.entities
 
 import java.nio.file.Path
 

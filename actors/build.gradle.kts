@@ -22,7 +22,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("it.unibo.pcd.assignment3.main.Main")
+    mainClass.set("it.unibo.pcd.assignment3.actors.main.Main")
 }
 
 wartremover {
@@ -44,7 +44,7 @@ wartremover {
     ))
     errorWarts.removeAll(setOf("DefaultArguments", "Var"))
     warningWarts.clear()
-    excludedFiles.addAll(fileTree("src/main/scala/it/unibo/pcd/assignment3/view").map { it.path }.asSequence())
+    excludedFiles.addAll(fileTree("src/main/scala/it/unibo/pcd/assignment3/actors/view").map { it.path }.asSequence())
 }
 
 scalafmt {
