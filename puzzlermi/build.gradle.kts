@@ -12,7 +12,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("it.unibo.pcd.assignment3.main.PuzzleGameApplication")
+    mainClass.set("it.unibo.pcd.assignment3.puzzlermi.main.PuzzleGameApplication")
 }
 
 javafx {
