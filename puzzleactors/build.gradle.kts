@@ -3,6 +3,7 @@ plugins {
     application
     id("cz.augi.gradle.wartremover") version "0.14.2"
     id("cz.alenkacz.gradle.scalafmt") version "1.16.2"
+    id("org.openjfx.javafxplugin") version "0.0.10"
 }
 
 repositories {
@@ -20,7 +21,7 @@ dependencies {
 }
 
 application {
-    //mainClass.set("it.unibo.pcd.assignment3.Main")
+    mainClass.set("it.unibo.pcd.assignment3.puzzleactors.main.Main")
 }
 
 wartremover {
@@ -48,4 +49,9 @@ wartremover {
 
 scalafmt {
     configFilePath = ".scalafmt.conf"
+}
+
+javafx {
+    version = "17"
+    modules("javafx.base", "javafx.controls", "javafx.fxml", "javafx.graphics")
 }
