@@ -29,9 +29,13 @@ object Peer {
       timestamp: VectorClock[String]
     ): Behavior[Command] =
       Behaviors.receiveMessage {
-        case RegistrationSuccessful => Idle(root, peers, gameState, timestamp)
-        case ChangedPeers(n)        => awaitRegistration(root, n, gameState, timestamp)
-        case _                      => Behaviors.unhandled
+        case RegistrationSuccessful =>
+          Behaviors.receiveMessage {
+            case ChangedPeers(_) => Idle(root, peers, gameState, timestamp)
+            case _               => Behaviors.unhandled
+          }
+        case ChangedPeers(n) => awaitRegistration(root, n, gameState, timestamp)
+        case _               => Behaviors.unhandled
       }
 
     private def chooseBoard(
@@ -45,7 +49,7 @@ object Peer {
         .maxByOption(_.progressiveId)
         .map { g =>
           root ! NewBoardReceived(g.board)
-          ctx.system.receptionist ! Receptionist.Register(addressBookKey, ctx.self)
+          ctx.system.receptionist ! Receptionist.Register(addressBookKey, ctx.self, registrationResponseAdapter(ctx))
           awaitRegistration(root, statuses.keySet, g, timestamp)
         }
         .getOrElse(Behaviors.empty)
@@ -60,8 +64,7 @@ object Peer {
         m match {
           case GameUpdate(g, t, s) if remainingPeers.size > 1 =>
             mainBehavior(root, statuses + (s -> g), timestamp.tick.update(t), remainingPeers - s)
-          case GameUpdate(g, t, s) =>
-            chooseBoard(root, c, statuses + (s -> g), timestamp.tick.update(t))
+          case GameUpdate(g, t, s) => chooseBoard(root, c, statuses + (s -> g), timestamp.tick.update(t))
           case ChangedPeers(n) =>
             val allPeers = statuses.keySet ++ remainingPeers
             if (n.size > allPeers.size) {
@@ -128,7 +131,7 @@ object Peer {
       val puzzleBoard: PuzzleBoard = gameState.board.swap(swap.firstPosition, swap.secondPosition)
       val nextGameState: GameState = GameState(puzzleBoard, gameState.progressiveId + 1)
       root ! NewBoardReceived(puzzleBoard)
-      val nextTimestamp: VectorClock[String] = peers !! (GameUpdate(gameState, _, self), timestamp)
+      val nextTimestamp: VectorClock[String] = peers !! (GameUpdate(nextGameState, _, self), timestamp)
       Idle(root, peers, nextGameState, lockRequest !! (LockPermitted(self, _), nextTimestamp))
     }
 
@@ -179,7 +182,7 @@ object Peer {
           case LockPermitted(p, t) if personalLock.count(!_._2) > 1 =>
             mainBehavior(root, personalLock + (p -> true), swap, gameState, timestamp.tick.update(t), lockRequests)
           case LockPermitted(_, t) =>
-            inCriticalSection(root, c.self, lockRequests, personalLock.keySet + c.self, swap, gameState, timestamp.tick.update(t))
+            inCriticalSection(root, c.self, lockRequests, personalLock.keySet, swap, gameState, timestamp.tick.update(t))
           case LockRequest(p, t) if t.isBefore(timestamp) =>
             val nextTimestamp: VectorClock[String] = timestamp.tick.update(t).tick
             p ! LockPermitted(c.self, nextTimestamp)
@@ -223,10 +226,10 @@ object Peer {
       if (peers.nonEmpty)
         mainBehavior(
           root,
-          peers.filter(_ =/= self).map(_ -> false).toMap,
+          peers.map(_ -> false).toMap,
           swap,
           gameState,
-          timestamp,
+          peers !! (LockRequest(self, _), timestamp),
           Set.empty[ActorRef[Command]]
         )
       else
