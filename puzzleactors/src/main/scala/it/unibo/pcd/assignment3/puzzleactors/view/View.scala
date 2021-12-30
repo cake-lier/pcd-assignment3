@@ -2,12 +2,13 @@ package it.unibo.pcd.assignment3.puzzleactors.view
 
 import it.unibo.pcd.assignment3.puzzleactors.controller._
 import it.unibo.pcd.assignment3.puzzleactors.model.{Position, Tile}
+import it.unibo.pcd.assignment3.puzzleactors.AnyOps.discard
 import javafx.application.Platform
-import javafx.scene.image.{Image, WritableImage}
-import javafx.scene.layout._
-import javafx.scene.paint.Color
-import javafx.scene.Scene
 import javafx.scene.control.Alert
+import javafx.scene.image.{Image, WritableImage}
+import javafx.scene.layout.{Border, BorderPane, BorderStroke, BorderStrokeStyle, BorderWidths, CornerRadii, GridPane}
+import javafx.scene.Scene
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 
 trait View {
@@ -29,13 +30,9 @@ object View {
 
     primaryStage.setTitle("Puzzle")
     primaryStage.setResizable(false)
-    private val board: BorderPane = new BorderPane
-    board.setBorder(new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)))
-    private val grid: GridPane = new GridPane
-    board.setCenter(grid)
     private val image: Image = new Image(imageUrl)
-    private val tileWidth = image.getWidth.toInt / columns
-    private val tileHeight = image.getHeight.toInt / rows
+    private val tileWidth: Int = image.getWidth.toInt / columns
+    private val tileHeight: Int = image.getHeight.toInt / rows
     private val tilesImages: Map[Position, Image] =
       (0 until columns)
         .flatMap(i =>
@@ -48,12 +45,16 @@ object View {
     private val controller: Controller = controllerFactory(this)
     private val selectionManager: SelectionManager = SelectionManager(controller)
     primaryStage.setOnCloseRequest(_ => controller.exit())
-    primaryStage.setScene(new Scene(board))
-    primaryStage.show()
 
-    private def displayTilesImmediately(tiles: Seq[Tile]): Unit = {
+    override def displayTiles(tiles: Seq[Tile]): Unit = Platform.runLater(() => {
       selectionManager.clearSelection()
-      grid.getChildren.removeAll(grid.getChildren)
+      val board: BorderPane = new BorderPane
+      board.setBorder(new Border(new BorderStroke(Color.GRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)))
+      val grid: GridPane = new GridPane
+      board.setCenter(grid)
+      discard {
+        grid.getChildren.removeAll(grid.getChildren)
+      }
       tiles.foreach { t =>
         grid.add(
           new TileButton(
@@ -64,13 +65,13 @@ object View {
           t.currentPosition.y
         )
       }
-      grid.layout()
-    }
-
-    override def displayTiles(tiles: Seq[Tile]): Unit = Platform.runLater(() => displayTilesImmediately(tiles))
+      val scene: Scene = new Scene(board)
+      primaryStage.setScene(scene)
+      primaryStage.show()
+    })
 
     override def displaySolution(): Unit =
-      Platform.runLater(() => new Alert(Alert.AlertType.INFORMATION, "Puzzle Completed!").showAndWait())
+      Platform.runLater(() => discard(new Alert(Alert.AlertType.INFORMATION, "Puzzle Completed!").showAndWait()))
   }
 
   def apply(

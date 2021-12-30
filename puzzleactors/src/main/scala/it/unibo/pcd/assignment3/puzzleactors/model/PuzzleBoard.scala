@@ -1,5 +1,7 @@
 package it.unibo.pcd.assignment3.puzzleactors.model
 
+import it.unibo.pcd.assignment3.puzzleactors.AnyOps.AnyOps
+
 import scala.util.Random
 
 trait PuzzleBoard {
@@ -17,10 +19,10 @@ object PuzzleBoard {
 
     override def swap(firstPosition: Position, secondPosition: Position): PuzzleBoard =
       tiles
-        .find(_.currentPosition == firstPosition)
+        .find(_.currentPosition === firstPosition)
         .flatMap { t1 =>
           tiles
-            .find(_.currentPosition == secondPosition)
+            .find(_.currentPosition === secondPosition)
             .map { t2 =>
               PuzzleBoardImpl(
                 tiles
@@ -37,7 +39,7 @@ object PuzzleBoard {
   def apply(rows: Int, columns: Int): PuzzleBoard =
     PuzzleBoard(
       Random
-        .shuffle((0 until rows).flatMap(r => (0 until columns).map(Position(r, _))))
+        .shuffle((0 until rows).flatMap(r => (0 until columns).map(Position(_, r))))
         .zipWithIndex
         .map(t => Tile(t._1, Position(t._2 % columns, t._2 / columns)))
     )

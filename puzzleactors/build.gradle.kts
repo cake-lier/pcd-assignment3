@@ -17,7 +17,8 @@ dependencies {
     implementation("com.typesafe.akka:akka-actor-typed_$scalaVersion:2.6.17")
     implementation("com.typesafe.akka:akka-cluster-typed_$scalaVersion:2.6.17")
     implementation("com.typesafe.akka:akka-serialization-jackson_$scalaVersion:2.6.17")
-    implementation("org.slf4j:slf4j-simple:1.6.1")
+    implementation("com.typesafe.akka:akka-slf4j_$scalaVersion:2.6.17")
+    implementation("ch.qos.logback:logback-classic:1.2.5")
 }
 
 application {
@@ -45,6 +46,7 @@ wartremover {
     ))
     errorWarts.removeAll(setOf("DefaultArguments", "Var"))
     warningWarts.clear()
+    excludedFiles.addAll(fileTree("src/main/scala/it/unibo/pcd/assignment3/puzzleactors/view").map { it.path }.asSequence())
 }
 
 scalafmt {

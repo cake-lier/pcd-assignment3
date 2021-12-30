@@ -12,7 +12,10 @@ object Peer {
   private val addressBookKey: ServiceKey[Command] = ServiceKey[Command]("address_book")
 
   private def listingResponseAdapter(ctx: ActorContext[Command]): ActorRef[Receptionist.Listing] =
-    ctx.messageAdapter[Receptionist.Listing] { case addressBookKey.Listing(peers) => ChangedPeers(peers) }
+    ctx.messageAdapter[Receptionist.Listing] { case addressBookKey.Listing(p) =>
+      val peers: Set[ActorRef[Command]] = p - ctx.self
+      ChangedPeers(peers)
+    }
 
   private def registrationResponseAdapter(ctx: ActorContext[Command]): ActorRef[Receptionist.Registered] =
     ctx.messageAdapter[Receptionist.Registered](_ => RegistrationSuccessful)
@@ -57,7 +60,8 @@ object Peer {
         m match {
           case GameUpdate(g, t, s) if remainingPeers.size > 1 =>
             mainBehavior(root, statuses + (s -> g), timestamp.tick.update(t), remainingPeers - s)
-          case GameUpdate(g, t, s) => chooseBoard(root, c, statuses + (s -> g), timestamp.tick.update(t))
+          case GameUpdate(g, t, s) =>
+            chooseBoard(root, c, statuses + (s -> g), timestamp.tick.update(t))
           case ChangedPeers(n) =>
             val allPeers = statuses.keySet ++ remainingPeers
             if (n.size > allPeers.size) {
@@ -78,7 +82,8 @@ object Peer {
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
       initialTimestamp: VectorClock[ActorRef[Command]]
-    ): Behavior[Command] = mainBehavior(root, Map.empty[ActorRef[Command], GameState], initialTimestamp, peers)
+    ): Behavior[Command] =
+      mainBehavior(root, Map.empty[ActorRef[Command], GameState], initialTimestamp, peers)
   }
 
   private object Idle {
@@ -86,24 +91,25 @@ object Peer {
     def apply(
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
-      currentGameState: GameState,
-      currentTimestamp: VectorClock[ActorRef[Command]]
+      gameState: GameState,
+      timestamp: VectorClock[ActorRef[Command]]
     ): Behavior[Command] =
       Behaviors.receive { (c, m) =>
         m match {
           case LockRequest(p, t) =>
-            val timestamp = currentTimestamp.tick.update(t).tick
-            p ! LockPermitted(c.self, timestamp)
-            apply(root, peers, currentGameState, timestamp)
-          case RequestSwap(s) => AwaitLock(root, c.self, peers, s, currentGameState, currentTimestamp)
+            val nextTimestamp = timestamp.tick.update(t).tick
+            p ! LockPermitted(c.self, nextTimestamp)
+            apply(root, peers, gameState, nextTimestamp)
+          case RequestSwap(s) => AwaitLock(root, c.self, peers, s, gameState, timestamp)
           case GameUpdate(g, t, _) =>
             root ! NewBoardReceived(g.board)
-            apply(root, peers, g, currentTimestamp.tick.update(t))
+            apply(root, peers, g, timestamp.tick.update(t))
           case RequestGameUpdate(p, t) =>
-            val timestamp = currentTimestamp.tick.update(t).tick
-            p ! GameUpdate(currentGameState, timestamp, c.self)
-            apply(root, peers, currentGameState, timestamp)
-          case _ => Behaviors.unhandled
+            val nextTimestamp = timestamp.tick.update(t).tick
+            p ! GameUpdate(gameState, nextTimestamp, c.self)
+            apply(root, peers, gameState, nextTimestamp)
+          case ChangedPeers(p) => apply(root, p, gameState, timestamp)
+          case _               => Behaviors.unhandled
         }
       }
   }
@@ -150,7 +156,7 @@ object Peer {
               )
             } else {
               val gonePeers = allPeers -- p
-              if (personalLock.filter(!_._2).keySet == gonePeers)
+              if (personalLock.filter(!_._2).keySet === gonePeers)
                 inCriticalSection(
                   root,
                   c.self,
@@ -201,6 +207,7 @@ object Peer {
             val nextTimestamp = timestamp.tick.update(t).tick
             p ! GameUpdate(gameState, nextTimestamp, c.self)
             mainBehavior(root, personalLock, swap, gameState, nextTimestamp, lockRequests)
+          case _ => Behaviors.unhandled
         }
       }
     }
@@ -210,17 +217,21 @@ object Peer {
       self: ActorRef[Command],
       peers: Set[ActorRef[Command]],
       swap: Swap,
-      currentGameState: GameState,
-      currentTimestamp: VectorClock[ActorRef[Command]]
-    ): Behavior[Command] =
-      mainBehavior(
-        root,
-        peers.filter(_ !== self).map(_ -> false).toMap,
-        swap,
-        currentGameState,
-        currentTimestamp,
-        Set.empty[ActorRef[Command]]
-      )
+      gameState: GameState,
+      timestamp: VectorClock[ActorRef[Command]]
+    ): Behavior[Command] = {
+      if (peers.nonEmpty)
+        mainBehavior(
+          root,
+          peers.filter(_ =/= self).map(_ -> false).toMap,
+          swap,
+          gameState,
+          timestamp,
+          Set.empty[ActorRef[Command]]
+        )
+      else
+        inCriticalSection(root, self, Set.empty[ActorRef[Command]], peers, swap, gameState, timestamp)
+    }
   }
 
   def apply(root: ActorRef[Command], board: PuzzleBoard): Behavior[Command] = Behaviors.setup { c =>
@@ -229,7 +240,7 @@ object Peer {
       case RegistrationSuccessful =>
         c.system.receptionist ! Receptionist.Subscribe(addressBookKey, listingResponseAdapter(c))
         Behaviors.receiveMessage {
-          case ChangedPeers(p) => Idle(root, p, GameState(board, 0), VectorClock(c.self))
+          case ChangedPeers(_) => Idle(root, Set.empty[ActorRef[Command]], GameState(board, 0), VectorClock(c.self))
           case _               => Behaviors.unhandled
         }
       case _ => Behaviors.unhandled
@@ -239,8 +250,12 @@ object Peer {
   def apply(root: ActorRef[Command]): Behavior[Command] = Behaviors.setup { c =>
     c.system.receptionist ! Receptionist.Subscribe(addressBookKey, listingResponseAdapter(c))
     Behaviors.receiveMessage {
-      case ChangedPeers(p) => AwaitingAllStatuses(root, p, p !! (RequestGameUpdate(c.self, _), VectorClock(c.self)))
-      case _               => Behaviors.unhandled
+      case ChangedPeers(_) =>
+        Behaviors.receiveMessage {
+          case ChangedPeers(p) => AwaitingAllStatuses(root, p, p !! (RequestGameUpdate(c.self, _), VectorClock(c.self)))
+          case _               => Behaviors.unhandled
+        }
+      case _ => Behaviors.unhandled
     }
   }
 }

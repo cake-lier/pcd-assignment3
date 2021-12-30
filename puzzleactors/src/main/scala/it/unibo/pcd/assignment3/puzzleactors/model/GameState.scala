@@ -9,7 +9,7 @@ trait GameState {
 
 object GameState {
 
-  private case class GameStateImpl(board: PuzzleBoard, progressiveId: Long) extends GameState
+  private final case class GameStateImpl(board: PuzzleBoard, progressiveId: Long) extends GameState
 
   def apply(board: PuzzleBoard, progressiveId: Long): GameState = GameStateImpl(board, progressiveId)
 

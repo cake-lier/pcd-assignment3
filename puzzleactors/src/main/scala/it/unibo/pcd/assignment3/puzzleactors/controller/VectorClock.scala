@@ -13,7 +13,7 @@ trait VectorClock[A] {
 
 object VectorClock {
 
-  private class VectorClockImpl[A](self: A, ticks: Map[A, Long]) extends VectorClock[A] {
+  private class VectorClockImpl[A](self: A, val ticks: Map[A, Long]) extends VectorClock[A] {
 
     override def tick: VectorClock[A] = new VectorClockImpl(self, ticks + (self -> (ticks(self) + 1)))
 
@@ -24,12 +24,12 @@ object VectorClock {
           .ticks
           .keySet
           .union(ticks.keySet)
-          .map(k => k -> other.ticks.getOrElse(k, 0).max(ticks.getOrElse(k, 0)))
+          .map(k => k -> (other.ticks.getOrElse(k, 0L) max ticks.getOrElse(k, 0L)))
           .toMap
       )
 
     override def isBefore(other: VectorClock[A]): Boolean =
-      ticks.forall(e => e._2 <= other.ticks.getOrElse(e._1, 0)) && ticks.exists(e => e._2 < other.ticks.getOrElse(e._1, 0))
+      ticks.forall(e => e._2 <= other.ticks.getOrElse(e._1, 0L)) && ticks.exists(e => e._2 < other.ticks.getOrElse(e._1, 0L))
   }
 
   def apply[A](self: A): VectorClock[A] = new VectorClockImpl(self, Map(self -> 0))

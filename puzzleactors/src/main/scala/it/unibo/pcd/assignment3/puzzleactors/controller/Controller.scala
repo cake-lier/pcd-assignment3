@@ -37,7 +37,7 @@ object Controller {
         val puzzleBoard: PuzzleBoard = PuzzleBoard(rows, columns)
         val cluster = Cluster(c.system)
         cluster.manager ! Join(cluster.selfMember.address)
-        val peer = c.spawnAnonymous(Peer(c.self, puzzleBoard))
+        val peer = c.spawnAnonymous[Command](Peer(c.self, puzzleBoard))
         displayBoard(view, puzzleBoard)
         afterInitializationState(peer, view)
       }),
@@ -52,7 +52,7 @@ object Controller {
         val cluster = Cluster(c.system)
         val buddyAddress = Address("akka", clusterSystemName, remoteHost, remotePort)
         cluster.manager ! Join(buddyAddress)
-        val peer = c.spawnAnonymous(Peer(c.self))
+        val peer = c.spawnAnonymous[Command](Peer(c.self))
         Behaviors.receiveMessage {
           case NewBoardReceived(b) =>
             displayBoard(view, b)
@@ -71,7 +71,7 @@ object Controller {
         s"""
            |akka.remote.artery.canonical {
            |  hostname = "$host"
-           |  port = $port
+           |  port = ${port.toString}
            |}
            |""".stripMargin
       )

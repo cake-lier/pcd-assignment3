@@ -19,7 +19,7 @@ object SelectionManager {
     override def clearSelection(): Unit = selectedPosition = None
 
     override def selectPosition(position: Position): Unit =
-      selectedPosition.filter(_ !== position) match {
+      selectedPosition.filter(_ =/= position) match {
         case Some(p) =>
           controller.swap(p, position)
           clearSelection()

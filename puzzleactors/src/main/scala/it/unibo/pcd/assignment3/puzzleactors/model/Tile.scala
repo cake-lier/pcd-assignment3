@@ -1,5 +1,7 @@
 package it.unibo.pcd.assignment3.puzzleactors.model
 
+import it.unibo.pcd.assignment3.puzzleactors.AnyOps.AnyOps
+
 trait Tile extends Ordered[Tile] {
 
   val originalPosition: Position
@@ -11,9 +13,9 @@ trait Tile extends Ordered[Tile] {
 
 object Tile {
 
-  private case class TileImpl(originalPosition: Position, currentPosition: Position) extends Tile {
+  private final case class TileImpl(originalPosition: Position, currentPosition: Position) extends Tile {
 
-    override def isInRightPlace: Boolean = originalPosition == currentPosition
+    override def isInRightPlace: Boolean = originalPosition === currentPosition
 
     override def compare(that: Tile): Int = currentPosition.compareTo(that.currentPosition)
   }

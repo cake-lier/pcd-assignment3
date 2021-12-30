@@ -8,7 +8,7 @@ trait Swap {
 
 object Swap {
 
-  private case class SwapImpl(firstPosition: Position, secondPosition: Position) extends Swap
+  private final case class SwapImpl(firstPosition: Position, secondPosition: Position) extends Swap
 
   def apply(firstPosition: Position, secondPosition: Position): Swap = SwapImpl(firstPosition, secondPosition)
 

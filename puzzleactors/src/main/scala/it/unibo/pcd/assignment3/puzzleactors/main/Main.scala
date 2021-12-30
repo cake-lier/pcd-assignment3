@@ -2,6 +2,7 @@ package it.unibo.pcd.assignment3.puzzleactors.main
 
 import it.unibo.pcd.assignment3.puzzleactors.controller.Controller
 import it.unibo.pcd.assignment3.puzzleactors.view.View
+import it.unibo.pcd.assignment3.puzzleactors.AnyOps.discard
 import javafx.application.Application
 import javafx.stage.Stage
 
@@ -15,17 +16,19 @@ final class Main extends Application {
     val parameters: Map[String, String] = getParameters.getNamed.asScala.toMap
     val host: String = parameters.getOrElse("h", "localhost")
     val port: Int = parameters.get("p").map(_.toInt).getOrElse(0)
-    View(
-      primaryStage,
-      rows,
-      columns,
-      ClassLoader.getSystemResource("bletchley-park-mansion.jpg").toExternalForm
-    )(
-      if (parameters.contains("H"))
-        Controller(_)(host, port, parameters("H"), parameters.get("P").map(_.toInt).getOrElse(0))
-      else
-        Controller(rows, columns, _)(host, port)
-    )
+    discard {
+      View(
+        primaryStage,
+        rows,
+        columns,
+        ClassLoader.getSystemResource("bletchley-park-mansion.jpg").toExternalForm
+      )(
+        if (parameters.contains("H"))
+          Controller(_)(host, port, parameters("H"), parameters.get("P").map(_.toInt).getOrElse(0))
+        else
+          Controller(rows, columns, _)(host, port)
+      )
+    }
   }
 }
 
