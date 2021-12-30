@@ -26,7 +26,7 @@ object Peer {
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
       gameState: GameState,
-      timestamp: VectorClock[ActorRef[Command]]
+      timestamp: VectorClock[String]
     ): Behavior[Command] =
       Behaviors.receiveMessage {
         case RegistrationSuccessful => Idle(root, peers, gameState, timestamp)
@@ -38,7 +38,7 @@ object Peer {
       root: ActorRef[Command],
       ctx: ActorContext[Command],
       statuses: Map[ActorRef[Command], GameState],
-      timestamp: VectorClock[ActorRef[Command]]
+      timestamp: VectorClock[String]
     ): Behavior[Command] =
       statuses
         .values
@@ -53,7 +53,7 @@ object Peer {
     private def mainBehavior(
       root: ActorRef[Command],
       statuses: Map[ActorRef[Command], GameState],
-      timestamp: VectorClock[ActorRef[Command]],
+      timestamp: VectorClock[String],
       remainingPeers: Set[ActorRef[Command]]
     ): Behavior[Command] =
       Behaviors.receive { (c, m) =>
@@ -81,7 +81,7 @@ object Peer {
     def apply(
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
-      initialTimestamp: VectorClock[ActorRef[Command]]
+      initialTimestamp: VectorClock[String]
     ): Behavior[Command] =
       mainBehavior(root, Map.empty[ActorRef[Command], GameState], initialTimestamp, peers)
   }
@@ -92,7 +92,7 @@ object Peer {
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
       gameState: GameState,
-      timestamp: VectorClock[ActorRef[Command]]
+      timestamp: VectorClock[String]
     ): Behavior[Command] =
       Behaviors.receive { (c, m) =>
         m match {
@@ -123,12 +123,12 @@ object Peer {
       peers: Set[ActorRef[Command]],
       swap: Swap,
       gameState: GameState,
-      timestamp: VectorClock[ActorRef[Command]]
+      timestamp: VectorClock[String]
     ): Behavior[Command] = {
       val puzzleBoard: PuzzleBoard = gameState.board.swap(swap.firstPosition, swap.secondPosition)
       val nextGameState: GameState = GameState(puzzleBoard, gameState.progressiveId + 1)
       root ! NewBoardReceived(puzzleBoard)
-      val nextTimestamp: VectorClock[ActorRef[Command]] = peers !! (GameUpdate(gameState, _, self), timestamp)
+      val nextTimestamp: VectorClock[String] = peers !! (GameUpdate(gameState, _, self), timestamp)
       Idle(root, peers, nextGameState, lockRequest !! (LockPermitted(self, _), nextTimestamp))
     }
 
@@ -137,7 +137,7 @@ object Peer {
       personalLock: Map[ActorRef[Command], Boolean],
       swap: Swap,
       gameState: GameState,
-      timestamp: VectorClock[ActorRef[Command]],
+      timestamp: VectorClock[String],
       lockRequests: Set[ActorRef[Command]]
     ): Behavior[Command] = {
       Behaviors.receive { (c, m) =>
@@ -181,7 +181,7 @@ object Peer {
           case LockPermitted(_, t) =>
             inCriticalSection(root, c.self, lockRequests, personalLock.keySet + c.self, swap, gameState, timestamp.tick.update(t))
           case LockRequest(p, t) if t.isBefore(timestamp) =>
-            val nextTimestamp: VectorClock[ActorRef[Command]] = timestamp.tick.update(t).tick
+            val nextTimestamp: VectorClock[String] = timestamp.tick.update(t).tick
             p ! LockPermitted(c.self, nextTimestamp)
             mainBehavior(root, personalLock, swap, gameState, nextTimestamp, lockRequests)
           case LockRequest(p, t) =>
@@ -218,7 +218,7 @@ object Peer {
       peers: Set[ActorRef[Command]],
       swap: Swap,
       gameState: GameState,
-      timestamp: VectorClock[ActorRef[Command]]
+      timestamp: VectorClock[String]
     ): Behavior[Command] = {
       if (peers.nonEmpty)
         mainBehavior(
@@ -240,7 +240,7 @@ object Peer {
       case RegistrationSuccessful =>
         c.system.receptionist ! Receptionist.Subscribe(addressBookKey, listingResponseAdapter(c))
         Behaviors.receiveMessage {
-          case ChangedPeers(_) => Idle(root, Set.empty[ActorRef[Command]], GameState(board, 0), VectorClock(c.self))
+          case ChangedPeers(_) => Idle(root, Set.empty[ActorRef[Command]], GameState(board, 0), VectorClock(c.self.toString))
           case _               => Behaviors.unhandled
         }
       case _ => Behaviors.unhandled
@@ -252,7 +252,7 @@ object Peer {
     Behaviors.receiveMessage {
       case ChangedPeers(_) =>
         Behaviors.receiveMessage {
-          case ChangedPeers(p) => AwaitingAllStatuses(root, p, p !! (RequestGameUpdate(c.self, _), VectorClock(c.self)))
+          case ChangedPeers(p) => AwaitingAllStatuses(root, p, p !! (RequestGameUpdate(c.self, _), VectorClock(c.self.toString)))
           case _               => Behaviors.unhandled
         }
       case _ => Behaviors.unhandled

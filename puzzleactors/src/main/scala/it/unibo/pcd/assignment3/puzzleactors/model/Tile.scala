@@ -1,7 +1,15 @@
 package it.unibo.pcd.assignment3.puzzleactors.model
 
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import it.unibo.pcd.assignment3.puzzleactors.AnyOps.AnyOps
+import it.unibo.pcd.assignment3.puzzleactors.model.Tile.TileImpl
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+  Array(
+    new JsonSubTypes.Type(value = classOf[TileImpl], name = "impl")
+  )
+)
 trait Tile extends Ordered[Tile] {
 
   val originalPosition: Position
@@ -13,7 +21,7 @@ trait Tile extends Ordered[Tile] {
 
 object Tile {
 
-  private final case class TileImpl(originalPosition: Position, currentPosition: Position) extends Tile {
+  private[model] final case class TileImpl(originalPosition: Position, currentPosition: Position) extends Tile {
 
     override def isInRightPlace: Boolean = originalPosition === currentPosition
 

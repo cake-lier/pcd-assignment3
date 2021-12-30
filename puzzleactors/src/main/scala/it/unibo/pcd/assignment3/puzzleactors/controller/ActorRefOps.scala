@@ -7,19 +7,19 @@ object ActorRefOps {
   implicit class RichActorRef(self: Iterable[ActorRef[Command]]) {
 
     def tellAll(
-      messageFactory: VectorClock[ActorRef[Command]] => Command,
-      currentTimestamp: VectorClock[ActorRef[Command]]
-    ): VectorClock[ActorRef[Command]] =
+      messageFactory: VectorClock[String] => Command,
+      currentTimestamp: VectorClock[String]
+    ): VectorClock[String] =
       self.foldLeft(currentTimestamp) { (t, a) =>
-        val nextTimestamp: VectorClock[ActorRef[Command]] = t.tick
+        val nextTimestamp: VectorClock[String] = t.tick
         a ! messageFactory(nextTimestamp)
         nextTimestamp
       }
 
     def !!(
-      messageFactory: VectorClock[ActorRef[Command]] => Command,
-      currentTimestamp: VectorClock[ActorRef[Command]]
-    ): VectorClock[ActorRef[Command]] =
+      messageFactory: VectorClock[String] => Command,
+      currentTimestamp: VectorClock[String]
+    ): VectorClock[String] =
       tellAll(messageFactory, currentTimestamp)
   }
 }

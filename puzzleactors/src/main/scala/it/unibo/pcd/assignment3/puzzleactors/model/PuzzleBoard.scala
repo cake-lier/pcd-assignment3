@@ -1,9 +1,17 @@
 package it.unibo.pcd.assignment3.puzzleactors.model
 
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import it.unibo.pcd.assignment3.puzzleactors.AnyOps.AnyOps
+import it.unibo.pcd.assignment3.puzzleactors.model.PuzzleBoard.PuzzleBoardImpl
 
 import scala.util.Random
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+  Array(
+    new JsonSubTypes.Type(value = classOf[PuzzleBoardImpl], name = "impl")
+  )
+)
 trait PuzzleBoard {
 
   val tiles: Seq[Tile]
@@ -15,7 +23,7 @@ trait PuzzleBoard {
 
 object PuzzleBoard {
 
-  private final case class PuzzleBoardImpl(tiles: Seq[Tile]) extends PuzzleBoard {
+  private[model] final case class PuzzleBoardImpl(tiles: Seq[Tile]) extends PuzzleBoard {
 
     override def swap(firstPosition: Position, secondPosition: Position): PuzzleBoard =
       tiles
