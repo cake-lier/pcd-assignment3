@@ -18,6 +18,8 @@ trait VectorClock[A] {
   def update(other: VectorClock[A]): VectorClock[A]
 
   def isBefore(other: VectorClock[A]): Boolean
+
+  def <(other: VectorClock[A]): Boolean = isBefore(other)
 }
 
 object VectorClock {

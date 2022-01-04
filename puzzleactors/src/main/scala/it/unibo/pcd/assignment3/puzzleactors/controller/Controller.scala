@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.Address
 import akka.cluster.typed.{Cluster, Join}
 import com.typesafe.config.{Config, ConfigFactory}
-import it.unibo.pcd.assignment3.puzzleactors.controller.Command.{NewBoardReceived, RequestSwap}
+import it.unibo.pcd.assignment3.puzzleactors.controller.Command.{NewBoardReceived, SwapRequest}
 import it.unibo.pcd.assignment3.puzzleactors.model.{Position, PuzzleBoard, Swap}
 import it.unibo.pcd.assignment3.puzzleactors.view.View
 
@@ -26,7 +26,7 @@ object Controller {
     }
 
     override def swap(firstPosition: Position, secondPosition: Position): Unit =
-      actorSystem ! RequestSwap(Swap(firstPosition, secondPosition))
+      actorSystem ! SwapRequest(Swap(firstPosition, secondPosition))
   }
 
   private val clusterSystemName = "puzzle"
@@ -82,7 +82,7 @@ object Controller {
       case NewBoardReceived(b) =>
         displayBoard(view, b)
         Behaviors.same
-      case s: RequestSwap =>
+      case s: SwapRequest =>
         peer ! s
         Behaviors.same
       case _ => Behaviors.unhandled
