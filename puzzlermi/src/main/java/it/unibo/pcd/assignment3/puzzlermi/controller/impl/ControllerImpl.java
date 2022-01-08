@@ -8,10 +8,8 @@ import it.unibo.pcd.assignment3.puzzlermi.controller.RemotePuzzle;
 import it.unibo.pcd.assignment3.puzzlermi.controller.RemoteSemaphore;
 import it.unibo.pcd.assignment3.puzzlermi.model.Position;
 import it.unibo.pcd.assignment3.puzzlermi.model.PuzzleBoard;
-import it.unibo.pcd.assignment3.puzzlermi.model.Tile;
 import it.unibo.pcd.assignment3.puzzlermi.model.impl.PuzzleBoardImpl;
 import it.unibo.pcd.assignment3.puzzlermi.view.View;
-import org.apache.commons.lang3.stream.Streams;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -19,7 +17,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.SortedSet;
@@ -45,6 +42,7 @@ class ControllerImpl implements Controller {
         );
         this.localGatekeeper = gatekeeper;
         LocateRegistry.createRegistry(self.getPort()).bind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
+        view.displayTiles(this.board.getTiles());
     }
 
     ControllerImpl(final View view, final Peer self, final Peer buddy)
@@ -76,12 +74,15 @@ class ControllerImpl implements Controller {
             this.localGatekeeper = gatekeeper;
             LocateRegistry.createRegistry(self.getPort())
                           .bind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
-            Streams.stream(remoteSemaphores.keySet()).forEach(p -> {
-                final var peerGatekeeper =
-                    ((RemoteGatekeeper) LocateRegistry.getRegistry(p.getHost(), p.getPort()).lookup("Gatekeeper"));
-                peerGatekeeper.registerPeer(self, selfPuzzleStub, selfSemaphoreStub);
-                peerGatekeeper.unregisterPeers(gonePeers);
-            });
+            for (final var peer : remoteSemaphores.keySet()) {
+                try {
+                    final var peerGatekeeper =
+                        ((RemoteGatekeeper) LocateRegistry.getRegistry(peer.getHost(), peer.getPort()).lookup("Gatekeeper"));
+                    peerGatekeeper.registerPeer(self, selfPuzzleStub, selfSemaphoreStub);
+                    peerGatekeeper.unregisterPeers(gonePeers);
+                } catch (final RemoteException ignored) {}
+            }
+            view.displayTiles(this.board.getTiles());
         } finally {
             this.releaseRemoteSemaphores(remoteSemaphores.values());
         }
@@ -95,19 +96,18 @@ class ControllerImpl implements Controller {
             this.acquireRemoteSemaphores(remoteSemaphores, gonePeers);
             try {
                 gonePeers.add(this.self);
-                Streams.stream(remoteSemaphores.keySet()).forEach(
-                    p -> ((RemoteGatekeeper) LocateRegistry.getRegistry(p.getHost(), p.getPort()).lookup("Gatekeeper"))
-                             .unregisterPeers(gonePeers));
+                for (final var peer: remoteSemaphores.keySet()) {
+                    try {
+                        ((RemoteGatekeeper) LocateRegistry.getRegistry(peer.getHost(), peer.getPort())
+                                                          .lookup("Gatekeeper"))
+                                                          .unregisterPeers(gonePeers);
+                    } catch (final RemoteException | NotBoundException ignored) {}
+                }
             } finally {
                 this.releaseRemoteSemaphores(remoteSemaphores.values());
             }
             System.exit(0);
         });
-    }
-
-    @Override
-    public List<Tile> getTiles() {
-        return this.board.getTiles();
     }
 
     @Override
@@ -127,9 +127,13 @@ class ControllerImpl implements Controller {
                     }
                 });
                 gonePeers.forEach(remoteSemaphores::remove);
-                Streams.stream(remoteSemaphores.keySet()).forEach(
-                    p -> ((RemoteGatekeeper) LocateRegistry.getRegistry(p.getHost(), p.getPort()).lookup("Gatekeeper"))
-                             .unregisterPeers(gonePeers));
+                for (final var peer: remoteSemaphores.keySet()) {
+                    try {
+                        ((RemoteGatekeeper) LocateRegistry.getRegistry(peer.getHost(), peer.getPort())
+                                                          .lookup("Gatekeeper"))
+                                                          .unregisterPeers(gonePeers);
+                    } catch (final RemoteException | NotBoundException ignored) {}
+                }
             } finally {
                 this.releaseRemoteSemaphores(remoteSemaphores.values());
             }
