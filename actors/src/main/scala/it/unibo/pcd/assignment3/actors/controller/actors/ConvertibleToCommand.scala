@@ -43,13 +43,6 @@ object ConvertibleToCommand {
     def from(b: PageCommand): Page = Page(b.text)
   }
 
-  implicit object ConvertibleToCommandResource extends ConvertibleToCommand[Resource, ResourceCommand] {
-
-    def to(a: Resource): ResourceCommand = ResourceCommand(a.page, a.stopwordsSet)
-
-    def from(b: ResourceCommand): Resource = Resource(b.page, b.stopwordsSet)
-  }
-
   implicit object ConvertibleToCommandUpdate extends ConvertibleToCommand[Update, UpdateCommand] {
 
     def to(a: Update): UpdateCommand = UpdateCommand(a.frequencies, a.processedWords)

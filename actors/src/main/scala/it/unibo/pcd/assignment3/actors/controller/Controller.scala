@@ -1,12 +1,14 @@
 package it.unibo.pcd.assignment3.actors.controller
 
 import akka.actor.typed.ActorSystem
+import akka.Done
 import it.unibo.pcd.assignment3.actors.controller.actors._
 import it.unibo.pcd.assignment3.actors.model.entities.FilePath
 import it.unibo.pcd.assignment3.actors.view.View
 
 import java.nio.file.Path
 import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /** The Controller component of this application, it should represent the application itself. That being so, it receives user
   * input from the View component and notifies it of changes in the Model component state. It should also be capable of notifying
@@ -58,9 +60,11 @@ object Controller {
 
     override def resume(): Unit = suspendedFlag.resume()
 
-    override def exit(): Unit = {
-      actorSystem.foreach(_.terminate())
-      sys.exit()
+    override def exit(): Unit = actorSystem match {
+      case Some(a) =>
+        a.whenTerminated.onComplete[Done](_ => sys.exit())
+        a.terminate()
+      case _ => sys.exit()
     }
   }
 

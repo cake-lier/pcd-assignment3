@@ -21,11 +21,11 @@ object UpdateSinkActor {
       Behaviors.withTimers { s =>
         val timerKey: Int = 0
         s.startTimerAtFixedRate(timerKey, TimerExpired, FiniteDuration((1000.0 / 60.0).round, MILLISECONDS))
-        receiveUpdate(s, timerKey, wordsNumber, view, Update(Map.empty[String, Long], 0), poisoned = false)
+        main(s, timerKey, wordsNumber, view, Update(Map.empty[String, Long], 0), poisoned = false)
       }
     }
 
-  private def receiveUpdate(
+  private def main(
     timerScheduler: TimerScheduler[Command],
     timerKey: Int,
     wordsNumber: Int,
@@ -35,7 +35,7 @@ object UpdateSinkActor {
   ): Behavior[Command] =
     Behaviors.receiveMessage {
       case UpdateCommand(f, w) =>
-        receiveUpdate(
+        main(
           timerScheduler,
           timerKey,
           wordsNumber,
@@ -46,7 +46,7 @@ object UpdateSinkActor {
           ),
           poisoned
         )
-      case PoisonPill => receiveUpdate(timerScheduler, timerKey, wordsNumber, view, cumulatedUpdate, poisoned = true)
+      case PoisonPill => main(timerScheduler, timerKey, wordsNumber, view, cumulatedUpdate, poisoned = true)
       case TimerExpired =>
         if (cumulatedUpdate.processedWords > 0) {
           view.displayProgress(

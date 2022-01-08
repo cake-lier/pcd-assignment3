@@ -18,7 +18,7 @@ object PathGeneratorActor {
     exceptionHandler: Throwable => Unit,
     pathCoordinator: ActorRef[Command],
     pageCoordinator: ActorRef[Command],
-    nextActorFactory: () => Behavior[Command],
+    nextActorFactory: Boolean => Behavior[Command],
     executor: ExecutionContext
   ): Behavior[Command] =
     Behaviors.setup { c =>
@@ -28,13 +28,13 @@ object PathGeneratorActor {
         case Success(v) => pageCoordinator ! StopwordsSetCommand(v, c.self)
       }
       Behaviors.receiveMessage {
-        case StopwordsAck =>
+        case StopwordsAck(_) =>
           Future(DocumentPathsGeneratorTask(filesDirectory))(executor).onComplete {
             case Failure(e) => exceptionHandler(e)
             case Success(v) =>
               (v.map[Command](_.toCommand).toSeq :+ PoisonPill).foreach(pathCoordinator ! _)
           }
-          nextActorFactory()
+          nextActorFactory(false)
         case _ => Behaviors.unhandled
       }
     }

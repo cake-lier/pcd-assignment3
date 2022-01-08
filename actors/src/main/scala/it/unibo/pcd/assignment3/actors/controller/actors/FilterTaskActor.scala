@@ -2,8 +2,16 @@ package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.{ActorRef, Behavior, DispatcherSelector}
 import akka.actor.typed.scaladsl.Behaviors
-import it.unibo.pcd.assignment3.actors.controller.actors.Command.{Available, PoisonPill, Ready}
+import it.unibo.pcd.assignment3.actors.controller.actors.Command.{
+  Available,
+  PageCommand,
+  PoisonPill,
+  Ready,
+  StopwordsAck,
+  StopwordsSetCommand
+}
 import it.unibo.pcd.assignment3.actors.controller.actors.ConvertibleToCommand._
+import it.unibo.pcd.assignment3.actors.model.entities.{Resource, Update}
 import it.unibo.pcd.assignment3.actors.model.tasks.{IterableTask, SingletonTask}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -11,17 +19,38 @@ import scala.reflect.ClassTag
 
 object FilterTaskActor {
 
-  def apply[A <: Command: ClassTag, B, C, D <: Command](
+  def apply(
     root: ActorRef[Command],
     prevCoordinator: ActorRef[Command],
     nextCoordinator: ActorRef[Command],
-    task: SingletonTask[B, C],
-    executor: ExecutionContext
-  )(implicit
-    firstConverter: ConvertibleToCommand[B, A],
-    secondConverter: ConvertibleToCommand[C, D]
-  ): Behavior[Command] =
-    main(root, prevCoordinator, nextCoordinator, task, executor, None)
+    task: SingletonTask[Resource, Update],
+    executor: ExecutionContext,
+    firstBuilt: Boolean
+  ): Behavior[Command] = Behaviors.setup { c =>
+    prevCoordinator ! Available(c.self)
+    Behaviors.receiveMessage {
+      case Ready =>
+        if (firstBuilt) {
+          root ! Ready
+        }
+        Behaviors.receiveMessage {
+          case StopwordsSetCommand(s, r) =>
+            r ! StopwordsAck(c.self)
+            Behaviors.receiveMessage {
+              case PoisonPill => Behaviors.stopped
+              case a: PageCommand =>
+                implicit val dispatcher: ExecutionContext = c.system.dispatchers.lookup(DispatcherSelector.default())
+                Future(nextCoordinator ! task(Resource(a.fromCommand, s)).toCommand)(executor)
+                  .onComplete(_ => prevCoordinator ! Available(c.self))
+                Behaviors.same
+              case _ => Behaviors.unhandled
+            }
+          case _ => Behaviors.unhandled
+        }
+      case PoisonPill => Behaviors.stopped
+      case _          => Behaviors.unhandled
+    }
+  }
 
   def apply[A <: Command: ClassTag, B, C, D <: Command](
     root: ActorRef[Command],
@@ -29,20 +58,8 @@ object FilterTaskActor {
     nextCoordinator: ActorRef[Command],
     task: SingletonTask[B, C],
     executor: ExecutionContext,
-    nextActorFactory: () => Behavior[Command]
-  )(implicit
-    firstConverter: ConvertibleToCommand[B, A],
-    secondConverter: ConvertibleToCommand[C, D]
-  ): Behavior[Command] =
-    main(root, prevCoordinator, nextCoordinator, task, executor, Some(nextActorFactory))
-
-  private def main[A <: Command: ClassTag, B, C, D <: Command](
-    root: ActorRef[Command],
-    prevCoordinator: ActorRef[Command],
-    nextCoordinator: ActorRef[Command],
-    task: SingletonTask[B, C],
-    executor: ExecutionContext,
-    nextActorFactory: Option[() => Behavior[Command]]
+    nextActorFactory: Boolean => Behavior[Command],
+    firstBuilt: Boolean
   )(implicit
     firstConverter: ConvertibleToCommand[B, A],
     secondConverter: ConvertibleToCommand[C, D]
@@ -50,19 +67,20 @@ object FilterTaskActor {
     prevCoordinator ! Available(c.self)
     Behaviors.receiveMessage {
       case Ready =>
-        root ! Ready
-        Behaviors.same
-      case PoisonPill =>
-        nextActorFactory match {
-          case Some(f) => f()
-          case _       => Behaviors.stopped
+        if (firstBuilt) {
+          root ! Ready
         }
-      case a: A =>
-        implicit val dispatcher: ExecutionContext = c.system.dispatchers.lookup(DispatcherSelector.default())
-        Future(nextCoordinator ! task(a.fromCommand).toCommand)(executor)
-          .onComplete(_ => prevCoordinator ! Available(c.self))
-        Behaviors.same
-      case _ => Behaviors.unhandled
+        Behaviors.receiveMessage {
+          case PoisonPill => nextActorFactory(false)
+          case a: A =>
+            implicit val dispatcher: ExecutionContext = c.system.dispatchers.lookup(DispatcherSelector.default())
+            Future(nextCoordinator ! task(a.fromCommand).toCommand)(executor)
+              .onComplete(_ => prevCoordinator ! Available(c.self))
+            Behaviors.same
+          case _ => Behaviors.unhandled
+        }
+      case PoisonPill => nextActorFactory(false)
+      case _          => Behaviors.unhandled
     }
   }
 
@@ -71,33 +89,9 @@ object FilterTaskActor {
     prevCoordinator: ActorRef[Command],
     nextCoordinator: ActorRef[Command],
     task: IterableTask[B, C],
-    executor: ExecutionContext
-  )(implicit
-    firstConverter: ConvertibleToCommand[B, A],
-    secondConverter: ConvertibleToCommand[C, D]
-  ): Behavior[Command] =
-    main(root, prevCoordinator, nextCoordinator, task, executor, None)
-
-  def apply[A <: Command: ClassTag, B, C, D <: Command](
-    root: ActorRef[Command],
-    prevCoordinator: ActorRef[Command],
-    nextCoordinator: ActorRef[Command],
-    task: IterableTask[B, C],
     executor: ExecutionContext,
-    nextActorFactory: () => Behavior[Command]
-  )(implicit
-    firstConverter: ConvertibleToCommand[B, A],
-    secondConverter: ConvertibleToCommand[C, D]
-  ): Behavior[Command] =
-    main(root, prevCoordinator, nextCoordinator, task, executor, Some(nextActorFactory))
-
-  private def main[A <: Command: ClassTag, B, C, D <: Command](
-    root: ActorRef[Command],
-    prevCoordinator: ActorRef[Command],
-    nextCoordinator: ActorRef[Command],
-    task: IterableTask[B, C],
-    executor: ExecutionContext,
-    nextActorFactory: Option[() => Behavior[Command]]
+    nextActorFactory: Boolean => Behavior[Command],
+    firstBuilt: Boolean
   )(implicit
     firstConverter: ConvertibleToCommand[B, A],
     secondConverter: ConvertibleToCommand[C, D]
@@ -105,19 +99,20 @@ object FilterTaskActor {
     prevCoordinator ! Available(c.self)
     Behaviors.receiveMessage {
       case Ready =>
-        root ! Ready
-        Behaviors.same
-      case PoisonPill =>
-        nextActorFactory match {
-          case Some(f) => f()
-          case _       => Behaviors.stopped
+        if (firstBuilt) {
+          root ! Ready
         }
-      case a: A =>
-        implicit val dispatcher: ExecutionContext = c.system.dispatchers.lookup(DispatcherSelector.default())
-        Future(task(a.fromCommand).foreach(nextCoordinator ! _.toCommand))(executor)
-          .onComplete(_ => prevCoordinator ! Available(c.self))
-        Behaviors.same
-      case _ => Behaviors.unhandled
+        Behaviors.receiveMessage {
+          case PoisonPill => nextActorFactory(false)
+          case a: A =>
+            implicit val dispatcher: ExecutionContext = c.system.dispatchers.lookup(DispatcherSelector.default())
+            Future(task(a.fromCommand).foreach(nextCoordinator ! _.toCommand))(executor)
+              .onComplete(_ => prevCoordinator ! Available(c.self))
+            Behaviors.same
+          case _ => Behaviors.unhandled
+        }
+      case PoisonPill => nextActorFactory(false)
+      case _          => Behaviors.unhandled
     }
   }
 }

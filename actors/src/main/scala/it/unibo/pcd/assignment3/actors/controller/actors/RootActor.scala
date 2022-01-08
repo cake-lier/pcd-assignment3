@@ -1,7 +1,7 @@
 package it.unibo.pcd.assignment3.actors.controller.actors
 
-import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior, Terminated}
+import akka.actor.typed.scaladsl.Behaviors
 import it.unibo.pcd.assignment3.actors.AnyOps.discard
 import it.unibo.pcd.assignment3.actors.controller.actors.Command._
 import it.unibo.pcd.assignment3.actors.model.entities._
@@ -74,31 +74,34 @@ object RootActor {
             totalActors
           )
         case Ready =>
-          val pageFilterFactory: () => Behavior[Command] = () =>
-            FilterTaskActor[ResourceCommand, Resource, Update, UpdateCommand](
+          val pageFilterFactory: Boolean => Behavior[Command] = f =>
+            FilterTaskActor(
               c.self,
               pageCoordinator,
               updateSinkActor,
               PageFilterTask,
-              executor
+              executor,
+              f
             )
-          val documentFilterFactory: () => Behavior[Command] = () =>
+          val documentFilterFactory: Boolean => Behavior[Command] = f =>
             FilterTaskActor[DocumentCommand, Document, Page, PageCommand](
               c.self,
               documentCoordinator,
               pageCoordinator,
               DocumentFilterTask,
               executor,
-              pageFilterFactory
+              pageFilterFactory,
+              f
             )
-          val pathFilterFactory: () => Behavior[Command] = () =>
+          val pathFilterFactory: Boolean => Behavior[Command] = f =>
             FilterTaskActor[FilePathCommand, FilePath, Document, DocumentCommand](
               c.self,
               pathCoordinator,
               documentCoordinator,
               PathFilterTask,
               executor,
-              documentFilterFactory
+              documentFilterFactory,
+              f
             )
           val workersToSpawn: LazyList[(FilterTaskType.Value, String)] =
             LazyList
@@ -107,9 +110,9 @@ object RootActor {
               .flatMap(e => e._1.map((_, e._2.toString)))
               .take(Math.max(totalActors - 2, 3))
           workersToSpawn.foreach {
-            case (FilterTaskType.Path, n)     => c.spawn[Command](pathFilterFactory(), name = s"path_filter_actor_$n")
-            case (FilterTaskType.Document, n) => c.spawn[Command](documentFilterFactory(), name = s"document_filter_actor_$n")
-            case (FilterTaskType.Page, n)     => c.spawn[Command](pageFilterFactory(), name = s"page_filter_actor_$n")
+            case (FilterTaskType.Path, n)     => c.spawn[Command](pathFilterFactory(true), name = s"path_filter_actor_$n")
+            case (FilterTaskType.Document, n) => c.spawn[Command](documentFilterFactory(true), name = s"document_filter_actor_$n")
+            case (FilterTaskType.Page, n)     => c.spawn[Command](pageFilterFactory(true), name = s"page_filter_actor_$n")
           }
           awaitWorkers(
             workersToSpawn.size,
@@ -130,7 +133,7 @@ object RootActor {
     spawnCount: Int,
     pathCoordinator: ActorRef[Command],
     pageCoordinator: ActorRef[Command],
-    pathFilterFactory: () => Behavior[Command],
+    pathFilterFactory: Boolean => Behavior[Command],
     updateSinkActor: ActorRef[Command],
     filesDirectory: FilePath,
     stopwordsFile: FilePath,

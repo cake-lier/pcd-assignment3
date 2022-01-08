@@ -1,7 +1,6 @@
 package it.unibo.pcd.assignment3.actors.controller.actors
 
 import akka.actor.typed.ActorRef
-import akka.actor.typed.receptionist.Receptionist
 import it.unibo.pcd.assignment3.actors.model.entities._
 import org.apache.pdfbox.pdmodel.PDDocument
 
@@ -20,11 +19,9 @@ object Command {
 
   final case class PageCommand(text: String) extends Command
 
-  final case class ResourceCommand(page: Page, stopwordsSet: StopwordsSet) extends Command
-
   final case class UpdateCommand(frequencies: Map[String, Long], processedWords: Long) extends Command
 
-  case object StopwordsAck extends Command
+  final case class StopwordsAck(sentFrom: ActorRef[Command]) extends Command
 
   case object PoisonPill extends Command
 
