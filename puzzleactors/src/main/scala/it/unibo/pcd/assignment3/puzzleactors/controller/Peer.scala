@@ -52,7 +52,7 @@ object Peer {
           ctx.system.receptionist ! Receptionist.Register(addressBookKey, ctx.self, registrationResponseAdapter(ctx))
           awaitRegistration(root, statuses.keySet, g, timestamp)
         }
-        .getOrElse(Behaviors.empty)
+        .getOrElse(SetupFailed(root))
 
     private def mainBehavior(
       root: ActorRef[Command],
@@ -93,6 +93,13 @@ object Peer {
         peers !! (GameUpdateRequest(ctx.self, _), initialTimestamp),
         peers
       )
+  }
+
+  private object SetupFailed {
+    def apply(root: ActorRef[Command]): Behavior[Command] = Behaviors.setup { _ =>
+      root ! SetupError
+      Behaviors.stopped
+    }
   }
 
   private object Idle {

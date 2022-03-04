@@ -24,4 +24,6 @@ object Command {
   final case class SwapRequest(swap: Swap) extends Command
   // peer representative to controller when a change in the state of the puzzle board occurs
   final case class NewBoardReceived(puzzleBoard: PuzzleBoard) extends Command
+  // peer representative to controller when the board cannot be choose
+  final case object SetupError extends Command
 }

@@ -16,6 +16,8 @@ trait View {
   def displayTiles(tiles: Seq[Tile]): Unit
 
   def displaySolution(): Unit
+
+  def displayJoinError(): Unit
 }
 
 object View {
@@ -72,6 +74,15 @@ object View {
 
     override def displaySolution(): Unit =
       Platform.runLater(() => discard(new Alert(Alert.AlertType.INFORMATION, "Puzzle Completed!").showAndWait()))
+
+    override def displayJoinError(): Unit = {
+      Platform.runLater(() =>
+        discard {
+          new Alert(Alert.AlertType.ERROR, "Impossible to join the game").showAndWait()
+          controller.exit()
+        }
+      )
+    }
   }
 
   def apply(

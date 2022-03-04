@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.Address
 import akka.cluster.typed.{Cluster, Join}
 import com.typesafe.config.{Config, ConfigFactory}
-import it.unibo.pcd.assignment3.puzzleactors.controller.Command.{NewBoardReceived, SwapRequest}
+import it.unibo.pcd.assignment3.puzzleactors.controller.Command.{NewBoardReceived, SetupError, SwapRequest}
 import it.unibo.pcd.assignment3.puzzleactors.model.{Position, PuzzleBoard, Swap}
 import it.unibo.pcd.assignment3.puzzleactors.view.View
 
@@ -85,6 +85,9 @@ object Controller {
       case s: SwapRequest =>
         peer ! s
         Behaviors.same
+      case SetupError =>
+        view.displayJoinError()
+        Behaviors.ignore
       case _ => Behaviors.unhandled
     }
 

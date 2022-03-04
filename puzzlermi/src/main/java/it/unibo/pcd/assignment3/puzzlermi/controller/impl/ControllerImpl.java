@@ -51,10 +51,12 @@ class ControllerImpl implements Controller {
         this.executor = Executors.newSingleThreadExecutor();
         final var buddyGatekeeper =
             (RemoteGatekeeper) LocateRegistry.getRegistry(buddy.getHost(), buddy.getPort()).lookup("Gatekeeper");
-        final var remoteSemaphores = buddyGatekeeper.getRemoteSemaphores();
+        final var initialRemoteSemaphores = buddyGatekeeper.getRemoteSemaphores();
         final var gonePeers = new TreeSet<Peer>();
-        this.acquireRemoteSemaphores(remoteSemaphores, gonePeers);
+        this.acquireRemoteSemaphores(initialRemoteSemaphores, gonePeers);
         try {
+            final var remoteSemaphores = buddyGatekeeper.getRemoteSemaphores();
+            gonePeers.forEach(remoteSemaphores::remove);
             final var remotePuzzles = buddyGatekeeper.getRemotePuzzles();
             gonePeers.forEach(remotePuzzles::remove);
             this.board = new PuzzleBoardImpl(remotePuzzles.get(buddy).getTiles());
@@ -83,8 +85,9 @@ class ControllerImpl implements Controller {
                 } catch (final RemoteException ignored) {}
             }
             view.displayTiles(this.board.getTiles());
-        } finally {
             this.releaseRemoteSemaphores(remoteSemaphores.values());
+        } finally {
+            this.releaseRemoteSemaphores(initialRemoteSemaphores.values());
         }
     }
 
