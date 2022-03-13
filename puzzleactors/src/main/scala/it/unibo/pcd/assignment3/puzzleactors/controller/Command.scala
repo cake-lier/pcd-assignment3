@@ -12,7 +12,10 @@ object Command {
   // receptionist to peer as subscribe ack and on every peer change
   final case class PeersChanged(peers: Set[ActorRef[Command]]) extends Command
   // new peer to already joined peers for getting current game state
-  final case class GameUpdateRequest(replyTo: ActorRef[Command], timestamp: VectorClock[String]) extends SerializableCommand
+  final case class GameStateRequest(replyTo: ActorRef[Command], timestamp: VectorClock[String]) extends SerializableCommand
+  // already joined peers to new peer for getting current game state
+  final case class GameStateResponse(gameState: Option[GameState], timestamp: VectorClock[String], sentFrom: ActorRef[Command])
+    extends SerializableCommand
   // peer to peer after explicit request or after swap completed
   final case class GameUpdate(gameState: GameState, timestamp: VectorClock[String], sentFrom: ActorRef[Command])
     extends SerializableCommand
