@@ -25,7 +25,7 @@ public class RemoteSemaphoreImpl implements RemoteSemaphore {
 
     @Override
     public void release(final Peer peer) {
-        if (this.permitOwner.isEmpty() || !this.permitOwner.get().equals(peer)) {
+        if (this.permitOwner.map(p -> !p.equals(peer)).orElse(false)) {
             throw new IllegalStateException();
         }
         this.permitOwner = Optional.empty();
