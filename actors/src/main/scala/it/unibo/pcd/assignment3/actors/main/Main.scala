@@ -11,6 +11,7 @@ final class Main extends Application {
   override def start(primaryStage: Stage): Unit = discard(View(primaryStage))
 }
 
+/** Companion object for the [[Main]] class, executing the code for launching it. */
 object Main extends App {
   Application.launch(classOf[Main], args: _*)
 }

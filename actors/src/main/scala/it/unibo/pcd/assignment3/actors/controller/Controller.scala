@@ -13,6 +13,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /** The Controller component of this application, it should represent the application itself. That being so, it receives user
   * input from the View component and notifies it of changes in the Model component state. It should also be capable of notifying
   * the Model of requests made by the user and receive the adequate response. At last, it should manage the application state.
+  *
+  * It must be constructed through its companion object.
   */
 trait Controller {
 
@@ -36,8 +38,10 @@ trait Controller {
   def exit(): Unit
 }
 
+/** Companion object to the [[Controller]] trait, containing its factory method. */
 object Controller {
 
+  /* An implementation of the Controller trait. */
   private class ControllerImpl(view: View) extends Controller {
     private var actorSystem: Option[ActorSystem[Command]] = None
     private val suspendedFlag: SuspendedFlag = SuspendedFlag()
@@ -68,5 +72,11 @@ object Controller {
     }
   }
 
+  /** The factory method for creating new instances of the [[Controller]] trait given the [[View]] component it should use.
+    * @param view
+    *   the [[View]] component the constructed [[Controller]] should use
+    * @return
+    *   a new instance of the [[Controller]] trait
+    */
   def apply(view: View): Controller = new ControllerImpl(view)
 }

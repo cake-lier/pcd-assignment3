@@ -8,14 +8,28 @@ import it.unibo.pcd.assignment3.actors.AnyOps.AnyOps
 
 import scala.reflect.ClassTag
 
+/** An actor which coordinates the distribution of the workload between the workers that registered to it and manage their
+  * lifecycle.
+  */
 object CoordinatorActor {
 
+  /** Returns the behavior of a generic coordinator actor.
+    * @param root
+    *   the root actor of the system
+    * @param nextCoordinator
+    *   the next coordinator actor in the data transformation chain
+    * @tparam A
+    *   the subtype of [[Command]] containing the data to be supplied as input to the worker actors
+    * @return
+    *   the behavior of a generic coordinator actor
+    */
   def apply[A <: Command: ClassTag](root: ActorRef[Command], nextCoordinator: ActorRef[Command]): Behavior[Command] =
     Behaviors.setup { _ =>
       root ! Ready
       main(nextCoordinator, Map.empty[ActorRef[Command], Int])
     }
 
+  /* The main state of a generic coordinator actor behavior. */
   private def main[A <: Command: ClassTag](
     nextCoordinator: ActorRef[Command],
     workers: Map[ActorRef[Command], Int]
@@ -42,11 +56,22 @@ object CoordinatorActor {
       case _ => Behaviors.unhandled
     }
 
+  /** Returns the behavior of a PageCoordinator actor.
+    * @param root
+    *   the root actor of the system
+    * @param updateCoordinator
+    *   the UpdateCoordinator next in line in the data transformation chain
+    * @return
+    *   the behavior of a PageCoordinator actor
+    */
   def pageCoordinator(root: ActorRef[Command], updateCoordinator: ActorRef[Command]): Behavior[Command] = Behaviors.setup { _ =>
     root ! Ready
     awaitStopwords(updateCoordinator, Map.empty[ActorRef[Command], Int])
   }
 
+  /* PageCoordinator behavior for waiting the receipt of the stopwords set and then send it to the workers already registered
+   * before the stopwords arrival.
+   */
   private def awaitStopwords(updateCoordinator: ActorRef[Command], workers: Map[ActorRef[Command], Int]): Behavior[Command] =
     Behaviors.receive { (c, m) =>
       m match {
@@ -60,6 +85,9 @@ object CoordinatorActor {
       }
     }
 
+  /* PageCoordinator behavior for waiting the StopwordsAck command from all worker actors to which the stopwords set was sent
+   * in the previous actor state.
+   */
   private def awaitWorkers(
     updateCoordinator: ActorRef[Command],
     workers: Map[ActorRef[Command], Int],
@@ -82,6 +110,7 @@ object CoordinatorActor {
       }
     }
 
+  /* The main state of a PageCoordinator actor behavior. */
   private def pageCoordinatorMain(
     updateCoordinator: ActorRef[Command],
     workers: Map[ActorRef[Command], Int],
@@ -112,6 +141,9 @@ object CoordinatorActor {
     }
   }
 
+  /* The behavior state in which all coordinators transition to when they receive a PoisonPill message, dedicated to shut down
+   * all worker actors and the pass the PoisonPill to the next coordinator actor in the line when all workers have been killed.
+   */
   private def closed(nextCoordinator: ActorRef[Command], workers: Map[ActorRef[Command], Int]): Behavior[Command] = {
     val actorsToBePoisoned: Iterable[ActorRef[Command]] = workers.filter(e => e._2 === 0).keys
     actorsToBePoisoned.foreach(_ ! PoisonPill)
@@ -121,6 +153,10 @@ object CoordinatorActor {
     onClosedAvailableReceived(nextCoordinator, workers -- actorsToBePoisoned)
   }
 
+  /* The sub-state of the "closed" behavior state in which the coordinator actors awaits for new Available commands from its
+   * worker actors, irregardless if they have already been registered before entering the "closed" state or are trying to
+   * registered with this very command.
+   */
   private def onClosedAvailableReceived(
     nextCoordinator: ActorRef[Command],
     workers: Map[ActorRef[Command], Int]

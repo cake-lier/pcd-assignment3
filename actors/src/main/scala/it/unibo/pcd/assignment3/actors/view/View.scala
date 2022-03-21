@@ -14,7 +14,9 @@ import java.io.File
 import java.nio.file.Path
 
 /** The View component of this application. It should capture user input and be notified of changes into the Model component which
-  * should appear convert the user.
+  * should appear to the user.
+  *
+  * A new instance must be constructed through its companion object.
   */
 trait View {
 
@@ -27,19 +29,20 @@ trait View {
     */
   def displayProgress(frequencies: Map[String, Long], processedWords: Long): Unit
 
-  /** It displays the completion of the computation, that the computation has ended.
-    */
+  /** It displays the completion of the computation when the computation has ended. */
   def displayCompletion(): Unit
 
   /** It displays an error message given the text of the message itself.
     * @param message
-    *   the text of the error message convert display
+    *   the text of the error message to display
     */
   def displayError(message: String): Unit
 }
 
+/** Companion object of the [[View]] trait, containing its factory method. */
 object View {
 
+  /* An implementation of the View trait which creates a Graphical User Interface using JavaFX. */
   private class GUIView(primaryStage: Stage) extends View {
 
     private val controller: Controller = Controller(this)
@@ -173,5 +176,10 @@ object View {
       })
   }
 
+  /** The factory method for creating new instances of the [[View]] trait which are Graphical User Interfaces realized with
+    * JavaFX.
+    * @param primaryStage
+    *   the JavaFX stage object in which drawing the scene of the interface
+    */
   def apply(primaryStage: Stage): View = new GUIView(primaryStage)
 }
