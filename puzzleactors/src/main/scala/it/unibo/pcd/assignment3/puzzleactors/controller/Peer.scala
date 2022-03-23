@@ -74,7 +74,7 @@ object Peer {
             val allPeers = statuses.keySet ++ remainingPeers
             if (n.size > allPeers.size) {
               val newPeers = n -- allPeers
-              mainBehavior(root, statuses ++ newPeers.map(p => p -> None), timestamp, remainingPeers)
+              mainBehavior(root, statuses, newPeers !! (GameStateRequest(c.self, _), timestamp), remainingPeers ++ newPeers)
             } else {
               val gonePeers = allPeers -- n
               if (gonePeers === remainingPeers)
@@ -233,7 +233,7 @@ object Peer {
       }
     }
 
-    /* Creates a new AwaitingAllStatuses behavior state. */
+    /* Creates a new AwaitLock behavior state. */
     def apply(
       root: ActorRef[Command],
       self: ActorRef[Command],
