@@ -11,8 +11,17 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.paint.Color;
 
+/**
+ * A {@link Button} used to represent a {@link it.unibo.pcd.assignment3.puzzlermi.model.Tile} of the puzzle in the grid-like view
+ * that displays it, which can be pressed for selecting that {@link it.unibo.pcd.assignment3.puzzlermi.model.Tile}.
+ */
 public class TileButton extends Button {
 
+	/**
+	 * Default constructor.
+	 * @param image the part of the puzzle image that this button should display
+	 * @param onButtonClicked the handler to be executed when this button is pressed with a mouse click
+	 */
 	public TileButton(final Image image, final Runnable onButtonClicked) {
 		super();
         this.setPadding(Insets.EMPTY);

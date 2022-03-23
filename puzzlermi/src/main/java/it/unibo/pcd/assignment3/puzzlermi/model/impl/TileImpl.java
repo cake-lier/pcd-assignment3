@@ -5,6 +5,11 @@ import it.unibo.pcd.assignment3.puzzlermi.model.Tile;
 
 import java.io.Serializable;
 
+/**
+ * A record implementation of the {@link Tile} interface.
+ * @param originalPosition the {@link Position} of this {@link Tile} in the reordered puzzle
+ * @param currentPosition the {@link Position} of this {@link Tile} in the current tiles' arrangement
+ */
 public record TileImpl(Position originalPosition, Position currentPosition) implements Tile, Serializable {
 
     @Override

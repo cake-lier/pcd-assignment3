@@ -6,8 +6,13 @@ import it.unibo.pcd.assignment3.puzzlermi.view.impl.ViewImpl;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
+/** The main class of the application. */
 public class PuzzleGameApplication extends Application {
 
+    /**
+     * The main method of the application, the one to be used for launching it.
+     * @param args unused
+     */
 	public static void main(final String[] args) {
         Application.launch(args);
 	}

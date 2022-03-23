@@ -8,6 +8,7 @@ import javafx.stage.Stage
 
 import scala.jdk.CollectionConverters.MapHasAsScala
 
+/** The main class of the application. */
 final class Main extends Application {
 
   override def start(primaryStage: Stage): Unit = {
@@ -32,6 +33,7 @@ final class Main extends Application {
   }
 }
 
+/** Companion object for the [[Main]] class, executing the code for launching it. */
 object Main extends App {
   Application.launch(classOf[Main], args: _*)
 }

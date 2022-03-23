@@ -28,12 +28,24 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * An implementation of the View interface which creates a Graphical User Interface using JavaFX.
+ */
 public class ViewImpl implements View {
     private final Controller controller;
 	private final SelectionManager selectionManager;
     private final Map<Position, Image> tilesImages;
     private final Stage primaryStage;
 
+    /**
+     * Default constructor.
+     * @param primaryStage the stage created by JavaFX on which displaying the puzzle view
+     * @param rows the number of rows of the grid-like view displaying the puzzle
+     * @param columns the number of columns of the grid-like view displaying the puzzle
+     * @param imageUrl the URL of the image to be used in the puzzle
+     * @param controllerFactory the factory capable of creating a new {@link Controller} given a view instance
+     * @throws Exception the exception thrown by the factory for the {@link Controller} component
+     */
     public ViewImpl(final Stage primaryStage,
                     final int rows,
                     final int columns,

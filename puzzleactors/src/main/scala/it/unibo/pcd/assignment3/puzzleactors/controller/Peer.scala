@@ -8,20 +8,27 @@ import it.unibo.pcd.assignment3.puzzleactors.controller.ActorRefOps.RichActorRef
 import it.unibo.pcd.assignment3.puzzleactors.controller.Command._
 import it.unibo.pcd.assignment3.puzzleactors.model.{GameState, PuzzleBoard, Swap}
 
+/** The peer actor of the system, the one that has to interact with the others for the correct progress of the game. */
 object Peer {
   private val addressBookKey: ServiceKey[Command] = ServiceKey[Command]("address_book")
 
+  /* Returns an adapter for transforming a Receptionist.Listing command into a PeersChanged one. */
   private def listingResponseAdapter(ctx: ActorContext[Command]): ActorRef[Receptionist.Listing] =
     ctx.messageAdapter[Receptionist.Listing] { case addressBookKey.Listing(p) =>
       val peers: Set[ActorRef[Command]] = p - ctx.self
       PeersChanged(peers)
     }
 
+  /* Returns an adapter for transforming a Receptionist.Registered message into a RegistrationSuccessful one. */
   private def registrationResponseAdapter(ctx: ActorContext[Command]): ActorRef[Receptionist.Registered] =
     ctx.messageAdapter[Receptionist.Registered](_ => RegistrationSuccessful)
 
+  /* State in which a peer stays while waiting for all GameStateResponses coming from all the other peers in the cluster. */
   private object AwaitingAllStatuses {
 
+    /* Chooses the PuzzleBoard from the current state of the game according to all boards that it has received from the other
+     * peers.
+     */
     private def chooseBoard(
       root: ActorRef[Command],
       statuses: Map[ActorRef[Command], Option[GameState]],
@@ -35,8 +42,12 @@ object Peer {
           root ! NewBoardReceived(g.board)
           Idle(root, statuses.keySet, g, timestamp)
         }
-        .getOrElse(SetupFailed(root))
+        .getOrElse {
+          root ! SetupError
+          Behaviors.stopped
+        }
 
+    /* The main sub-state of the AwaitAllStatuses state, which is a recursive one. */
     private def mainBehavior(
       root: ActorRef[Command],
       statuses: Map[ActorRef[Command], Option[GameState]],
@@ -75,6 +86,7 @@ object Peer {
         }
       }
 
+    /* Creates a new AwaitingAllStatuses behavior state. */
     def apply(
       root: ActorRef[Command],
       ctx: ActorContext[Command],
@@ -89,15 +101,10 @@ object Peer {
       )
   }
 
-  private object SetupFailed {
-    def apply(root: ActorRef[Command]): Behavior[Command] = Behaviors.setup { _ =>
-      root ! SetupError
-      Behaviors.stopped
-    }
-  }
-
+  /* State in which a peer stays idling, waiting for the next thing to do.  */
   private object Idle {
 
+    /* Creates a new Idle behavior state. */
     def apply(
       root: ActorRef[Command],
       peers: Set[ActorRef[Command]],
@@ -125,8 +132,12 @@ object Peer {
       }
   }
 
+  /* State in which a peer stays while performing the operations for accessing critical section where a Swap of the Tiles of the
+   * puzzle can be made.
+   */
   private object AwaitLock {
 
+    /* The sub-state of the AwaitLock state that represents the critical section. */
     private def inCriticalSection(
       root: ActorRef[Command],
       self: ActorRef[Command],
@@ -136,13 +147,14 @@ object Peer {
       gameState: GameState,
       timestamp: VectorClock[String]
     ): Behavior[Command] = {
-      val puzzleBoard: PuzzleBoard = gameState.board.swap(swap.firstPosition, swap.secondPosition)
+      val puzzleBoard: PuzzleBoard = gameState.board.swap(swap)
       val nextGameState: GameState = GameState(puzzleBoard, gameState.progressiveId + 1)
       root ! NewBoardReceived(puzzleBoard)
       val nextTimestamp: VectorClock[String] = peers !! (GameUpdate(nextGameState, _, self), timestamp)
       Idle(root, peers, nextGameState, lockRequests !! (LockPermitted(self, _), nextTimestamp))
     }
 
+    /* The main sub-state of the AwaitLock state, which is a recursive one. */
     private def mainBehavior(
       root: ActorRef[Command],
       personalLock: Map[ActorRef[Command], Boolean],
@@ -221,6 +233,7 @@ object Peer {
       }
     }
 
+    /* Creates a new AwaitingAllStatuses behavior state. */
     def apply(
       root: ActorRef[Command],
       self: ActorRef[Command],
@@ -244,6 +257,14 @@ object Peer {
     }
   }
 
+  /** Returns the behavior of a peer actor when the peer is the first one in joining a game session.
+    * @param root
+    *   the root actor of the local actor system in which the peer actor runs
+    * @param board
+    *   the initial [[PuzzleBoard]] of the game
+    * @return
+    *   the behavior of a peer actor when the peer is the first one in joining a game session
+    */
   def apply(root: ActorRef[Command], board: PuzzleBoard): Behavior[Command] = Behaviors.setup { c =>
     c.system.receptionist ! Receptionist.Register(addressBookKey, c.self, registrationResponseAdapter(c))
     Behaviors.receiveMessage {
@@ -257,6 +278,14 @@ object Peer {
     }
   }
 
+  /** Returns the behavior of a peer actor when it is an "extra peer", so a peer which is not the first in joining a desired game
+    * session.
+    * @param root
+    *   the root actor of the local actor system in which the peer actor runs
+    * @return
+    *   the behavior of a peer actor when it is an "extra peer", so a peer which is not the first in joining a desired game
+    *   session
+    */
   def apply(root: ActorRef[Command]): Behavior[Command] = Behaviors.setup { c =>
     c.system.receptionist ! Receptionist.Register(addressBookKey, c.self, registrationResponseAdapter(c))
     Behaviors.receiveMessage {

@@ -5,7 +5,7 @@ import it.unibo.pcd.assignment3.actors.AnyOps.discard
 import javafx.application.Application
 import javafx.stage.Stage
 
-/** The main class for the application with a graphical user interface for the user. */
+/** The main class of the application. */
 final class Main extends Application {
 
   override def start(primaryStage: Stage): Unit = discard(View(primaryStage))

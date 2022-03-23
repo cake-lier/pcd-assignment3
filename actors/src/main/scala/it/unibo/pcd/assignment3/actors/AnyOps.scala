@@ -3,7 +3,7 @@ package it.unibo.pcd.assignment3.actors
 /** Collection of extension utilities for the Any trait. */
 object AnyOps {
 
-  /** Defines the "equals" and "not equals" operations without using cooperative equality. */
+  /** Defines the "equals" operation without using cooperative equality. */
   @SuppressWarnings(Array("org.wartremover.warts.Equals"))
   implicit final class AnyOps[A](self: A) {
 

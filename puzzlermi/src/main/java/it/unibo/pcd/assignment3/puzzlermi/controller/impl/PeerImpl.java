@@ -4,6 +4,11 @@ import it.unibo.pcd.assignment3.puzzlermi.controller.Peer;
 
 import java.io.Serializable;
 
+/**
+ * A record implememntation of the {@link Peer} interface.
+ * @param host the hostname of this peer
+ * @param port the port of this peer
+ */
 public record PeerImpl(String host, int port) implements Peer, Serializable {
 
     @Override

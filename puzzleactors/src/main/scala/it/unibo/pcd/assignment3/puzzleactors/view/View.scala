@@ -11,17 +11,31 @@ import javafx.scene.Scene
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 
+/** The View component of this application. It should capture user input and be notified of changes into the Model component which
+  * should appear to the user.
+  *
+  * A new instance must be constructed through its companion object.
+  */
 trait View {
 
+  /** Shows a new arrangement of [[Tile]]s into the grid-like view which displays the puzzle. The [[Tile]]s are arranged following
+    * their current position.
+    * @param tiles
+    *   the new arrangement of [[Tile]]s to be displayed
+    */
   def displayTiles(tiles: Seq[Tile]): Unit
 
+  /** Displays the message to the player indicating the completion of the game. */
   def displaySolution(): Unit
 
+  /** Displays an error message to the player when they cannot join a game session due to an error. */
   def displayJoinError(): Unit
 }
 
+/** Companion object to the View trait, containing its factory method. */
 object View {
 
+  /* An implementation of the View trait which creates a Graphical User Interface using JavaFX. */
   private class ViewImpl(
     primaryStage: Stage,
     rows: Int,
@@ -85,6 +99,21 @@ object View {
     }
   }
 
+  /** The factory method for creating a new instance of the [[View]] trait given the [[Stage]] on which displaying it, the
+    * dimensions and the image of the puzzle to display and the factory for creating the Controller component from this View.
+    * @param primaryStage
+    *   the stage created by JavaFX on which displaying the puzzle view
+    * @param rows
+    *   the number of rows of the grid-like view displaying the puzzle
+    * @param columns
+    *   the number of columns of the grid-like view displaying the puzzle
+    * @param imageUrl
+    *   the URL of the image to be used in the puzzle
+    * @param controllerFactory
+    *   the factory capable of creating a new [[Controller]] given a view instance
+    * @return
+    *   a new instance of the [[View]] trait
+    */
   def apply(
     primaryStage: Stage,
     rows: Int,

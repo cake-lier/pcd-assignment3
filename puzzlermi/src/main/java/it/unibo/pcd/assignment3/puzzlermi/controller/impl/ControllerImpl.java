@@ -11,7 +11,6 @@ import it.unibo.pcd.assignment3.puzzlermi.model.PuzzleBoard;
 import it.unibo.pcd.assignment3.puzzlermi.model.impl.PuzzleBoardImpl;
 import it.unibo.pcd.assignment3.puzzlermi.view.View;
 
-import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -24,14 +23,25 @@ import java.util.TreeSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * An implementation of the {@link Controller} trait.
+ */
 class ControllerImpl implements Controller {
     private final Peer self;
     private final PuzzleBoard board;
     private final LocalGatekeeper localGatekeeper;
     private final Executor executor;
 
-    ControllerImpl(final int rows, final int columns, final View view, final Peer self)
-        throws AlreadyBoundException, RemoteException {
+    /**
+     * Constructor for creating the {@link Controller} of the application when associated to the first {@link Peer} in a game
+     * session.
+     * @param rows the number of rows of the {@link PuzzleBoard}
+     * @param columns the number of columns of the {@link PuzzleBoard}
+     * @param view the {@link View} component to be usd by this {@link Controller}
+     * @param self the {@link Peer} associated to this {@link Controller} instance
+     * @throws RemoteException if it could not create the RMI registry or export or bind the stub of the {@link RemoteGatekeeper}
+     */
+    ControllerImpl(final int rows, final int columns, final View view, final Peer self) throws RemoteException {
         this.self = Objects.requireNonNull(self);
         this.executor = Executors.newSingleThreadExecutor();
         this.board = new PuzzleBoardImpl(rows, columns);
@@ -41,12 +51,21 @@ class ControllerImpl implements Controller {
             new RemoteSemaphoreImpl()
         );
         this.localGatekeeper = gatekeeper;
-        LocateRegistry.createRegistry(self.getPort()).bind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
+        LocateRegistry.createRegistry(self.getPort()).rebind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
         view.displayTiles(this.board.getTiles());
     }
 
+    /**
+     * Constructor for creating the {@link Controller} of the application when associated to an "extra {@link Peer}", a
+     * {@link Peer} which is not the first in joining a game session.
+     * @param view the {@link View} component to be usd by this {@link Controller}
+     * @param self the {@link Peer} associated to this {@link Controller} instance
+     * @param buddy the {@link Peer} to be contacted for joining the desired game session
+     * @throws NotBoundException if the {@link RemoteGatekeeper} of the buddy {@link Peer} is not found
+     * @throws RemoteException if an error occurs in a remote method, namely because the connection was severed
+     */
     ControllerImpl(final View view, final Peer self, final Peer buddy)
-        throws AlreadyBoundException, NotBoundException, RemoteException {
+        throws NotBoundException, RemoteException {
         this.self = Objects.requireNonNull(self);
         this.executor = Executors.newSingleThreadExecutor();
         final var buddyGatekeeper =
@@ -75,7 +94,7 @@ class ControllerImpl implements Controller {
             );
             this.localGatekeeper = gatekeeper;
             LocateRegistry.createRegistry(self.getPort())
-                          .bind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
+                          .rebind("Gatekeeper", UnicastRemoteObject.exportObject(gatekeeper, 0));
             for (final var peer : remoteSemaphores.keySet()) {
                 try {
                     final var peerGatekeeper =
@@ -143,6 +162,9 @@ class ControllerImpl implements Controller {
         });
     }
 
+    /* Acquires all the given RemoteSemaphores and puts the Peers associated to the ones that throw RemoteException in the given
+     * set.
+     */
     private void acquireRemoteSemaphores(
         final SortedMap<Peer, RemoteSemaphore> remoteSemaphores,
         final SortedSet<Peer> gonePeers
@@ -157,6 +179,7 @@ class ControllerImpl implements Controller {
         gonePeers.forEach(remoteSemaphores::remove);
     }
 
+    /* Releases the given previously acquired RemoteSemaphores. */
     private void releaseRemoteSemaphores(final Collection<RemoteSemaphore> semaphores) {
         for (final var semaphore: semaphores) {
             try {

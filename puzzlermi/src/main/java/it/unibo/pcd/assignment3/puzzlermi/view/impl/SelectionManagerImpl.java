@@ -6,10 +6,17 @@ import it.unibo.pcd.assignment3.puzzlermi.view.SelectionManager;
 
 import java.util.Optional;
 
+/**
+ * An implementation of the SelectionManager trait.
+ */
 public class SelectionManagerImpl implements SelectionManager {
     private final Controller controller;
 	private Optional<Position> selectedPosition;
 
+    /**
+     * Default constructor.
+     * @param controller the {@link Controller} component of this application
+     */
     public SelectionManagerImpl(final Controller controller) {
         this.controller = controller;
         this.selectedPosition = Optional.empty();
@@ -28,5 +35,10 @@ public class SelectionManagerImpl implements SelectionManager {
     @Override
     public void clearSelection() {
         this.selectedPosition = Optional.empty();
+    }
+
+    @Override
+    public String toString() {
+        return "SelectionManagerImpl{selectedPosition=" + this.selectedPosition + "}";
     }
 }
